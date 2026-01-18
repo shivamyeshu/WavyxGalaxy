@@ -1,22 +1,21 @@
-# 🚀 Galaxy.ai × Weavy Workflow Builder
+# Galaxy.ai × Weavy Workflow Builder
 
-> **An advanced LLM-powered visual workflow editor** inspired by Weavy.ai, built for Galaxy.ai SDE internship challenge. Seamlessly create, execute, and manage AI workflows with a beautiful node-based canvas interface.
+> An advanced LLM-powered visual workflow editor inspired by Weavy.ai, built for Galaxy.ai SDE internship challenge. Seamlessly create, execute, and manage AI workflows with a beautiful node-based canvas interface.
 
-**Submission for Galaxy.ai SDE Internship** | Candidate: Repliworld (Shivam) | January 18, 2026
-
+**Submission for Galaxy.ai** | Candidate:Shivam | January 18, 2026
 ---
 
-## ✨ What is This?
+## What is This?
 
 Galaxy Workflow Builder is a modern, production-ready visual workflow editor that lets you:
 
-- 🎨 **Build workflows visually** using an intuitive drag-and-drop node canvas
-- 🤖 **Execute LLM-powered workflows** with Google Gemini integration
-- 📸 **Process images** with upload, crop, and AI analysis capabilities
-- ⚡ **Run on Trigger.dev** for reliable, scalable execution
-- 💾 **Persist everything** with Prisma + PostgreSQL
-- 🔐 **Secure authentication** with Clerk
-- 🌙 **Beautiful dark mode UI** inspired by Weavy's design system
+- **Build workflows visually** using an intuitive drag-and-drop node canvas
+- **Execute LLM-powered workflows** with Google Gemini integration
+- **Process images** with upload, crop, and AI analysis capabilities
+- **Run on Trigger.dev** for reliable, scalable execution
+- **Persist everything** with Prisma + PostgreSQL
+- **Secure authentication** with Clerk
+- **Beautiful dark mode UI** inspired by Weavy's design system
 
 Perfect for:
 - Building no-code AI automation workflows
@@ -26,80 +25,80 @@ Perfect for:
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [🎯 Key Features](#-key-features)
-- [🛠️ Tech Stack](#-tech-stack)
-- [🚀 Quick Start](#-quick-start)
-- [📦 Project Structure](#-project-structure)
-- [🎬 Demo Workflow](#-demo-workflow)
-- [🔧 Configuration](#-configuration)
-- [🗺️ Roadmap](#-roadmap)
-- [💡 Architecture Highlights](#-architecture-highlights)
-- [👤 About](#-about)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
+- [Demo Workflow](#demo-workflow)
+- [Configuration](#configuration)
+- [Roadmap](#roadmap)
+- [Architecture Highlights](#architecture-highlights)
+- [About](#about)
 
 ---
 
-## 🎯 Key Features
+## Key Features
 
 ### Canvas & UI
-- ✅ **Pixel-inspired Weavy design** with dark mode, dotted grid, and minimap
-- ✅ **Smooth pan/zoom** interactions on the canvas
-- ✅ **Real-time visual feedback** with pulsating glow effects on running nodes
-- ✅ **Left sidebar** with quick-access node buttons
+- Pixel-inspired Weavy design with dark mode, dotted grid, and minimap
+- Smooth pan/zoom interactions on the canvas
+- Real-time visual feedback with pulsating glow effects on running nodes
+- Left sidebar with quick-access node buttons
 
 ### Workflow Execution
-- ✅ **4 fully functional node types:**
-  - 📤 **Image Input** → Upload images via Transloadit, get public URLs
-  - ✂️ **Crop Image** → Precise image cropping with X%, Y%, Width%, Height% parameters
-  - 🤖 **LLM Node** → Execute Google Gemini prompts via Trigger.dev
-  - 📝 **Text Node** → Static text with output connections
+- 4 fully functional node types:
+  - Image Input: Upload images via Transloadit, get public URLs
+  - Crop Image: Precise image cropping with X%, Y%, Width%, Height% parameters
+  - LLM Node: Execute Google Gemini prompts via Trigger.dev
+  - Text Node: Static text with output connections
 
-- ✅ **Sequential workflow execution** with real data flow
-- ✅ **Trigger.dev integration** for reliable, serverless execution
-- ✅ **Node deletion & context menus** with loading/error states
+- Sequential workflow execution with real data flow
+- Trigger.dev integration for reliable, serverless execution
+- Node deletion & context menus with loading/error states
 
 ### Data & Persistence
-- ✅ **Workflow history panel** with execution logs (timestamp, status, node details)
-- ✅ **Prisma ORM** with PostgreSQL for reliable persistence
-- ✅ **Type-safe data flow** with Zod validation
-- ✅ **JSON-based node data** storage for flexibility
+- Workflow history panel with execution logs (timestamp, status, node details)
+- Prisma ORM with PostgreSQL for reliable persistence
+- Type-safe data flow with Zod validation
+- JSON-based node data storage for flexibility
 
 ### Authentication & Security
-- ✅ **Clerk authentication** with protected routes
-- ✅ **User-scoped workflows** and executions
+- Clerk authentication with protected routes
+- User-scoped workflows and executions
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |----------|-------------|
-| **Framework** | Next.js 15 (App Router) + TypeScript |
-| **UI Framework** | Tailwind CSS + shadcn/ui + Lucide React Icons |
-| **Canvas** | @xyflow/react (React Flow v12) |
-| **State** | Zustand + Zundo (undo/redo ready) |
-| **Auth** | Clerk (@clerk/nextjs) |
-| **Database** | Prisma ORM + PostgreSQL (Neon) |
-| **LLM** | Google Gemini API (@google/generative-ai) |
-| **Execution** | Trigger.dev v4 (serverless orchestration) |
-| **File Upload** | Transloadit (Uppy + @uppy/transloadit) |
-| **Validation** | Zod |
-| **Animations** | Framer Motion |
+| Framework | Next.js 15 (App Router) + TypeScript |
+| UI Framework | Tailwind CSS + shadcn/ui + Lucide React Icons |
+| Canvas | @xyflow/react (React Flow v12) |
+| State | Zustand + Zundo (undo/redo ready) |
+| Auth | Clerk (@clerk/nextjs) |
+| Database | Prisma ORM + PostgreSQL (Neon) |
+| LLM | Google Gemini API (@google/generative-ai) |
+| Execution | Trigger.dev v4 (serverless orchestration) |
+| File Upload | Transloadit (Uppy + @uppy/transloadit) |
+| Validation | Zod |
+| Animations | Framer Motion |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js 20+**
-- **PostgreSQL** (free tier: [Neon.tech](https://neon.tech))
+- Node.js 20+
+- PostgreSQL (free tier: Neon.tech)
 - External accounts:
-  - [Clerk](https://clerk.com) — Authentication
-  - [Google AI Studio](https://aistudio.google.com) — Gemini API key
-  - [Trigger.dev](https://trigger.dev) — Workflow orchestration
-  - [Transloadit](https://transloadit.com) — File uploads
+  - Clerk — Authentication
+  - Google AI Studio — Gemini API key
+  - Trigger.dev — Workflow orchestration
+  - Transloadit — File uploads
 
 ### Installation
 
@@ -155,7 +154,7 @@ npx trigger.dev@latest dev
 
 ---
 
-## 📦 Project Structure
+## Project Structure
 
 ```
 src/
@@ -192,23 +191,23 @@ prisma/
 
 ---
 
-## 🎬 Demo Workflow
+## Demo Workflow
 
 The app includes a pre-built demo workflow:
 
 **Image → Crop → LLM Analysis Pipeline**
 
-1. **Upload Image** → Transloadit handles upload, stores public URL
-2. **Crop Image** → Adjust crop region with X%, Y%, Width%, Height% sliders
-3. **Text Prompt** → Add your analysis prompt (e.g., "Describe what you see")
-4. **Run LLM** → Gemini analyzes the cropped image using your prompt
-5. **View Results** → Output appears in node + execution history panel
+1. Upload Image: Transloadit handles upload, stores public URL
+2. Crop Image: Adjust crop region with X%, Y%, Width%, Height% sliders
+3. Text Prompt: Add your analysis prompt (e.g., "Describe what you see")
+4. Run LLM: Gemini analyzes the cropped image using your prompt
+5. View Results: Output appears in node + execution history panel
 
-To load: Click **"Load Demo Workflow"** in the workflow editor.
+To load: Click "Load Demo Workflow" in the workflow editor.
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Database Migrations
 
@@ -253,28 +252,28 @@ export const myCustomTask = task({
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 ### Phase 2 (Planned)
-- [ ] **Video Processing** — Upload video, extract frames with FFmpeg
-- [ ] **Parallel Execution** — Run multiple branches simultaneously
-- [ ] **Convergence Nodes** — Merge parallel workflows at final LLM node
-- [ ] **Workflow Import/Export** — Save as JSON, share with teammates
-- [ ] **DAG Cycle Detection** — Prevent invalid workflow connections
-- [ ] **Full Undo/Redo** — Complete history management via Zundo
-- [ ] **Advanced Node Types** — Database queries, webhooks, SMS/Email
-- [ ] **Monitoring Dashboard** — Execution analytics & performance metrics
-- [ ] **Multi-user Collaboration** — Real-time editing with WebSockets
-- [ ] **100% Pixel-Perfect Styling** — Exact Weavy.ai UI replication
+- Video Processing — Upload video, extract frames with FFmpeg
+- Parallel Execution — Run multiple branches simultaneously
+- Convergence Nodes — Merge parallel workflows at final LLM node
+- Workflow Import/Export — Save as JSON, share with teammates
+- DAG Cycle Detection — Prevent invalid workflow connections
+- Full Undo/Redo — Complete history management via Zundo
+- Advanced Node Types — Database queries, webhooks, SMS/Email
+- Monitoring Dashboard — Execution analytics & performance metrics
+- Multi-user Collaboration — Real-time editing with WebSockets
+- Pixel-Perfect Styling — Exact Weavy.ai UI replication
 
 ---
 
-## 💡 Architecture Highlights
+## Architecture Highlights
 
 ### State Management
-- **Zustand** for workflow state (nodes, edges, executions)
-- **Zundo** integration ready for undo/redo functionality
-- **React Context** for Clerk authentication
+- Zustand for workflow state (nodes, edges, executions)
+- Zundo integration ready for undo/redo functionality
+- React Context for Clerk authentication
 
 ### Data Flow
 ```
@@ -284,48 +283,29 @@ User Action → Zustand Store → Update Canvas → Serialize → Prisma → Pos
 ```
 
 ### Type Safety
-- **TypeScript** for compile-time safety
-- **Zod** for runtime validation of workflow/node data
-- **Prisma** types generated from schema
+- TypeScript for compile-time safety
+- Zod for runtime validation of workflow/node data
+- Prisma types generated from schema
 
 ### Performance
-- **Next.js Image Optimization** for uploaded images
-- **React Flow memoization** to prevent unnecessary node re-renders
-- **Trigger.dev async execution** keeps UI responsive
+- Next.js Image Optimization for uploaded images
+- React Flow memoization to prevent unnecessary node re-renders
+- Trigger.dev async execution keeps UI responsive
 
 ---
 
-## 🎓 What This Demonstrates
+## What This Demonstrates
 
-✅ **Full-stack modern web development**
-- Next.js 15 with App Router
-- TypeScript for type safety
-- Client-side state management with Zustand
-
-✅ **External service integrations**
-- Clerk authentication (OAuth)
-- Google Gemini API (LLM)
-- Trigger.dev (serverless execution)
-- Transloadit (file uploads)
-- PostgreSQL via Neon
-
-✅ **Complex UI patterns**
-- React Flow for visual node graphs
-- Animated edges & transitions
-- Real-time status feedback
-- Responsive design with Tailwind
-
-✅ **Production-ready code**
-- Error handling & loading states
-- Data validation with Zod
-- Database persistence with Prisma
-- Secure authentication middleware
+- Full-stack modern web development with Next.js 15, TypeScript, and Zustand
+- External service integrations with Clerk, Google Gemini, Trigger.dev, and Transloadit
+- Complex UI patterns with React Flow, animations, and responsive design
+- Production-ready code with error handling, validation, persistence, and security
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Found a bug or want to improve this? Fork the repo and submit a PR! 
+Found a bug or want to improve this? Fork the repo and submit a PR.
 
 Areas that need help:
 - Video processing branch implementation
@@ -335,7 +315,7 @@ Areas that need help:
 
 ---
 
-## 📄 License
+## License
 
 This project is open for educational and portfolio purposes. Credit Galaxy.ai and Weavy.ai for inspiration.
 
@@ -345,21 +325,19 @@ This project is open for educational and portfolio purposes. Credit Galaxy.ai an
 
 **Shivam** | Delhi, India
 
--   [GitHub](https://github.com/shivamyeshu)
--   [Linkedin](https://www.linkedin.com/in/shivam-yeshu)
--   Contact via GitHub
+- GitHub: https://github.com/shivamyeshu
+- LinkedIn: https://www.linkedin.com/in/shivam-yeshu
+- Contact via GitHub
 
-Built with ❤️ for the Galaxy.ai SDE internship challenge.
+Built for the Galaxy.ai SDE internship challenge.
 
-*Deadline: January 22, 2026 EOD*
+Deadline: January 22, 2026 EOD
 
 ---
 
 ## Support
 
-Have questions? 
-- Check the [Issues](https://github.com/shivamyeshu/WavyxGalaxy/issues) tab
+Have questions?
+- Check the Issues tab
 - Open a discussion for architecture questions
 - Review the inline code comments (especially in `src/trigger/` and `src/store/`)
-
-Happy building! 🚀
