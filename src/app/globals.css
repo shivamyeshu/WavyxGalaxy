@@ -24,6 +24,21 @@
 
 /* Customize React Flow selection box color - change from yellow to black */
 .react-flow__selection {
-    background: rgba(0, 0, 0, 0.2) !important;
+    
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+
+
+
+/* Browser text selection (Jo maine pehle bataya tha) */
+::selection {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #000;
+  text-emphasis-color: inherit;
+}
+
+/* Buttons par click karne par jo blue/yellow outline aati hai uske liye */
+*:focus {
+  outline: none !important;
 }

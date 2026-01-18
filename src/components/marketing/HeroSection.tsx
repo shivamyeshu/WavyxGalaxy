@@ -3,7 +3,7 @@ import MobileHeroCards from "@/components/marketing/MobileHeroCards";
 
 export default function HeroSection() {
 	return (
-		<section className="relative w-full bg-gradient-to-b from-[#DDE1E3] to-[##dce3e9]">
+		<section className="relative w-full bg-gradient-to-b from-[#d6e8f1] to-[##dce3e9]">
 			{/* Background Grid Pattern */}
 			<div
 				className="absolute inset-0"

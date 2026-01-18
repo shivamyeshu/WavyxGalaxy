@@ -5,13 +5,14 @@ import { Node, Edge } from "@xyflow/react";
 // =========================================
 
 export interface HeroNodeData extends Record<string, unknown> {
-    label?: string;
-    type?: string;       // e.g., "3D", "Image", "Text"
-    image?: string;      // URL for the image content
-    text?: string;       // Content for text nodes
-    width?: string;      // Tailwind class override (e.g., "w-[300px]")
-    height?: string;     // Tailwind class override (e.g., "aspect-video")
-    gradientClass?: string; // For the Color Reference node
+   type?: string;
+  label?: string;
+  image?: string;
+  video?: string;
+  text?: string;
+  width?: string;
+  height?: string;
+  gradientClass?: string;
 }
 
 // The specific Node type for the Hero section

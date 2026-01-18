@@ -7,12 +7,11 @@ import {saveWorkflowAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
 
 export default function Header() {
-	// 1. Get state and actions from the store - now includes workflowName
+	
 	const {nodes, edges, workflowId, workflowName, setWorkflowId, setWorkflowName} = useWorkflowStore();
 	const [isSaving, setIsSaving] = useState(false);
 	const [isLoadOpen, setIsLoadOpen] = useState(false);
 
-	// 2. Remove local workflowName state - now using store
 	const [isEditingName, setIsEditingName] = useState(false);
 
 	// --- HANDLE SAVE (Existing Logic) ---

@@ -149,13 +149,12 @@ const ExploreWorkflows = () => {
 	};
 
 	return (
-		<section className="bg-[#111111] py-24 px-0 overflow-hidden text-white font-sans w-full">
+		<section className="bg-[#2b2d2a] py-24 px-0 overflow-hidden text-white font-sans w-full">
 			{/* HEADER */}
 			<div className="max-w-[1600px] mx-auto px-6 md:px-10 mb-8">
-				<h2 className="text-5xl md:text-7xl font-medium tracking-tight mb-6 leading-tight">Explore Our Workflows</h2>
+				<h2 className="text-4xl md:text-6xl font-medium tracking-tight mb-6 leading-tight">Explore Our Workflows</h2>
 				<p className="text-lg text-white/60 leading-relaxed max-w-2xl">
-					From multi-layer compositing to matte manipulation, Weavy keeps up with your creativity with all the editing tools you recognize and rely
-					on.
+					From multi-layer compositing to matte manipulation, Weavy keeps up with your creativity with all the editing tools you recognize and rely on.
 				</p>
 			</div>
 
@@ -198,7 +197,7 @@ const ExploreWorkflows = () => {
 									target="_blank"
 									rel="noopener noreferrer"
 									className={`
-                    absolute bottom-4 left-4 bg-[#dfff4f] text-black px-5 py-1.5 rounded-md font-bold text-xs md:text-sm 
+                    absolute bottom-0 left-0 bg-[#FEF3C7] text-black px-5 py-1.5 rounded-md font-bold text-xs md:text-sm 
                     transition-all duration-300 z-20 hover:bg-white
                     ${isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0"}
                   `}>

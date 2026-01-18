@@ -63,7 +63,7 @@ export default function StickyModelSection() {
 				{/* Content Grid */}
 				<div className="relative z-20 w-full h-full px-2 sm:px-6 flex flex-col md:grid md:grid-cols-12 gap-y-6 md:gap-8 items-center h-full">
 					{/* Headline and description */}
-					<div className="w-full md:col-span-7 flex flex-col justify-center md:px-10">
+					<div className="w-full md:col-span-7 flex flex-col justify-left md:px-10">
 						<h2 className="text-[14vw] font-normal md:text-[6vw] md:font-medium leading-[1.05] tracking-tight mt-12 mb-10 md:mb-8 drop-shadow-lg">
 							Use all AI models, together at last
 						</h2>
@@ -82,7 +82,7 @@ export default function StickyModelSection() {
 									<div
 										key={idx}
 										className={`text-[30px] md:text-[3.5vw] font-medium tracking-tight leading-[1.1] cursor-pointer transition-colors ${
-											isActive ? "text-[#dfff4f]" : "text-white"
+											isActive ? "text-[#d2d8b5]" : "text-white"
 										}`}>
 										{model.name}
 									</div>

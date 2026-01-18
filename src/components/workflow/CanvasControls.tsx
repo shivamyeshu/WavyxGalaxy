@@ -35,7 +35,7 @@ export default function CanvasControls({isHandMode, toggleMode}: CanvasControlsP
 					onClick={() => toggleMode(false)}
 					className={cn(
 						"p-1.5 rounded-md transition-all",
-						!isHandMode ? "bg-[#dfff4f] text-black shadow-sm" : "text-white/50 hover:text-white hover:bg-white/10"
+						!isHandMode ? "bg-[#FEF3C7] text-black shadow-sm" : "text-white/50 hover:text-white hover:bg-white/10"
 					)}
 					title="Selection Mode (V)">
 					<MousePointer2 size={16} fill={!isHandMode ? "currentColor" : "none"} />
@@ -44,7 +44,7 @@ export default function CanvasControls({isHandMode, toggleMode}: CanvasControlsP
 					onClick={() => toggleMode(true)}
 					className={cn(
 						"p-1.5 rounded-md transition-all",
-						isHandMode ? "bg-[#dfff4f] text-black shadow-sm" : "text-white/50 hover:text-white hover:bg-white/10"
+						isHandMode ? "bg-[#FEF3C7] text-black shadow-sm" : "text-white/50 hover:text-white hover:bg-white/10"
 					)}
 					title="Pan Mode (H)">
 					<Hand size={16} />

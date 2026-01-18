@@ -42,7 +42,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 					{/* 1. TEXT NODE */}
 					<div
 						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#dfff4f]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
 							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
 						)}
 						draggable
@@ -52,7 +52,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						</div>
 						{!isCollapsed && (
 							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#dfff4f]">Text</p>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Text</p>
 								<p className="text-[10px] text-white/40">Input plain text</p>
 							</div>
 						)}
@@ -61,7 +61,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 					{/* 2. IMAGE NODE */}
 					<div
 						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#dfff4f]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
 							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
 						)}
 						draggable
@@ -71,7 +71,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						</div>
 						{!isCollapsed && (
 							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#dfff4f]">Image</p>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Image</p>
 								<p className="text-[10px] text-white/40">Upload images</p>
 							</div>
 						)}
@@ -80,7 +80,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 					{/* 3. CROP IMAGE NODE */}
 					<div
 						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#dfff4f]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
 							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
 						)}
 						draggable
@@ -90,7 +90,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						</div>
 						{!isCollapsed && (
 							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#dfff4f]">Crop Image</p>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Crop Image</p>
 								<p className="text-[10px] text-white/40">Center crop 80%</p>
 							</div>
 						)}
@@ -99,17 +99,17 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 					{/* 4. RUN ANY LLM NODE */}
 					<div
 						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#dfff4f]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
 							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
 						)}
 						draggable
 						onDragStart={(e) => onDragStart(e, "llmNode")}>
-						<div className="w-8 h-8 rounded bg-[#dfff4f]/10 flex items-center justify-center text-[#dfff4f] group-hover:text-white">
+						<div className="w-8 h-8 rounded bg-[#FEF3C7]/10 flex items-center justify-center text-[#FEF3C7] group-hover:text-white">
 							<Bot size={18} />
 						</div>
 						{!isCollapsed && (
 							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#dfff4f]">Run Any LLM</p>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Run Any LLM</p>
 								<p className="text-[10px] text-white/40">Gemini Processing</p>
 							</div>
 						)}

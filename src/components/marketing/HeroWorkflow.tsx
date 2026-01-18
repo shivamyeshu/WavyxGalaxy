@@ -1,9 +1,9 @@
-import {ReactFlow, useNodesState, useEdgesState, Handle, Position, BaseEdge, EdgeProps, getBezierPath, Node} from "@xyflow/react";
+import { ReactFlow, useNodesState, useEdgesState, Handle, Position, BaseEdge, EdgeProps, getBezierPath } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import type {HeroNode, HeroNodeData} from "@/lib/types";
+import type { HeroNode, HeroNodeData } from "@/lib/types";
 
 // --- 1. CUSTOM NODE ---
-const MarketingCardNode = ({data}: {data: HeroNodeData}) => {
+const MarketingCardNode = ({ data }: { data: HeroNodeData }) => {
 	const width = data.width || "w-64";
 	const height = data.height || "aspect-[4/5]";
 
@@ -16,12 +16,29 @@ const MarketingCardNode = ({data}: {data: HeroNodeData}) => {
 					<span className="text-foreground">{data.label}</span>
 				</div>
 			)}
-			{data.type && !data.label && <div className="text-[10px] font-medium tracking-[0.15em] uppercase text-foreground/70">{data.type}</div>}
+			{data.type && !data.label && (
+				<div className="text-[10px] font-medium tracking-[0.15em] uppercase text-foreground/70">
+					{data.type}
+				</div>
+			)}
 
 			{/* Node Content */}
 			<div className={`${height} w-full rounded-lg overflow-hidden bg-muted/50 relative`}>
-				{data.image ? (
-					<img src={data.image} alt={data.label || "workflow node"} className="w-full h-full object-cover" />
+				{data.video ? (
+					<video
+						src={typeof data.video === "string" ? data.video : undefined}
+						autoPlay
+						loop
+						muted
+						playsInline
+						className="w-full h-full object-cover"
+					/>
+				) : data.image ? (
+					<img
+						src={data.image}
+						alt={data.label || "workflow node"}
+						className="w-full h-full object-cover"
+					/>
 				) : data.text ? (
 					<div className="p-4 h-full flex items-start bg-card border border-border rounded-lg">
 						<p className="text-[11px] leading-relaxed text-foreground/80">{data.text}</p>
@@ -39,7 +56,7 @@ const MarketingCardNode = ({data}: {data: HeroNodeData}) => {
 };
 
 // --- 2. CUSTOM EDGE ---
-const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: EdgeProps) => {
+const CustomEdge = ({ id, sourceX, sourceY, targetX, targetY }: EdgeProps) => {
 	const [edgePath] = getBezierPath({
 		sourceX,
 		sourceY,
@@ -52,24 +69,23 @@ const CustomEdge = ({id, sourceX, sourceY, targetX, targetY}: EdgeProps) => {
 			id={id}
 			path={edgePath}
 			style={{
-				stroke: "#fff", // Use a solid, visible color
-				strokeWidth: 1.5, // Make the edge thicker
-				opacity: 1, // Increase opacity for visibility
+				stroke: "#fff",
+				strokeWidth: 1.5,
+				opacity: 1,
 			}}
 		/>
 	);
 };
 
-const nodeTypes = {marketingCard: MarketingCardNode};
-const edgeTypes = {custom: CustomEdge};
+const nodeTypes = { marketingCard: MarketingCardNode };
+const edgeTypes = { custom: CustomEdge };
 
 // --- 3. NODE LAYOUT ---
 const initialNodes: HeroNode[] = [
-	// --- COLUMN 1 (Left) ---
 	{
 		id: "1",
 		type: "marketingCard",
-		position: {x: 50, y: 80},
+		position: { x: 40, y: 80 },
 		data: {
 			type: "3D",
 			label: "Rodin 2.0",
@@ -81,21 +97,19 @@ const initialNodes: HeroNode[] = [
 	{
 		id: "2",
 		type: "marketingCard",
-		position: {x: 50, y: 380},
+		position: { x: 50, y: 380 },
 		data: {
 			type: "Color Reference",
 			label: "",
-			gradientClass: "bg-gradient-to-r from-blue-900 via-purple-800 to-orange-300",
+			image: "https://cdn.prod.website-files.com/681b040781d5b5e278a69989/681cd77722078ff43fe428f3_hcard-color%20reference.avif",
 			width: "w-[220px]",
 			height: "h-[100px]",
 		},
 	},
-
-	// --- COLUMN 2 (Main Center Image) ---
 	{
 		id: "3",
 		type: "marketingCard",
-		position: {x: 380, y: 120},
+		position: { x: 380, y: 120 },
 		data: {
 			type: "Image",
 			label: "Stable Diffusion",
@@ -104,12 +118,10 @@ const initialNodes: HeroNode[] = [
 			height: "aspect-[3/4]",
 		},
 	},
-
-	// --- COLUMN 3 (Input & Flux) ---
 	{
 		id: "4",
 		type: "marketingCard",
-		position: {x: 780, y: 120},
+		position: { x: 680, y: 60 },
 		data: {
 			type: "Text",
 			label: "",
@@ -121,7 +133,7 @@ const initialNodes: HeroNode[] = [
 	{
 		id: "5",
 		type: "marketingCard",
-		position: {x: 780, y: 280},
+		position: { x: 830, y: 280 },
 		data: {
 			type: "Image",
 			label: "Flux Pro 1.1",
@@ -130,16 +142,14 @@ const initialNodes: HeroNode[] = [
 			height: "aspect-square",
 		},
 	},
-
-	// --- COLUMN 4 (Final Output) ---
 	{
 		id: "6",
 		type: "marketingCard",
-		position: {x: 1080, y: 80},
+		position: { x: 1080, y: 80 },
 		data: {
 			type: "Video",
 			label: "Minimax Video",
-			image: "https://cdn.prod.website-files.com/681b040781d5b5e278a69989/6825887e82ac8a8bb8139ebd_GPT%20img%201.avif",
+			video: "https://assets.weavy.ai/homepage/hero/hero_video_mobile_342px.mp4",
 			width: "w-[300px]",
 			height: "aspect-[3/4]",
 		},
@@ -147,11 +157,11 @@ const initialNodes: HeroNode[] = [
 ];
 
 const initialEdges = [
-	{id: "e1-3", source: "1", target: "3", type: "custom"},
-	{id: "e2-3", source: "2", target: "3", type: "custom"},
-	{id: "e3-6", source: "3", target: "6", type: "custom"},
-	{id: "e4-5", source: "4", target: "5", type: "custom"},
-	{id: "e5-6", source: "5", target: "6", type: "custom"},
+	{ id: "e1-3", source: "1", target: "3", type: "custom" },
+	{ id: "e2-3", source: "2", target: "3", type: "custom" },
+	{ id: "e3-6", source: "3", target: "6", type: "custom" },
+	{ id: "e4-5", source: "4", target: "5", type: "custom" },
+	{ id: "e5-6", source: "5", target: "6", type: "custom" },
 ];
 
 export default function HeroWorkflow() {
@@ -168,18 +178,19 @@ export default function HeroWorkflow() {
 				nodeTypes={nodeTypes}
 				edgeTypes={edgeTypes}
 				fitView
-				fitViewOptions={{padding: 0.1}}
-				panOnDrag={false} // Prevent canvas dragging
-				panOnScroll={false} // Prevent canvas dragging with scroll
+				fitViewOptions={{ padding: 0.1 }}
+				panOnDrag={false}
+				panOnScroll={false}
 				zoomOnScroll={false}
 				zoomOnPinch={false}
 				zoomOnDoubleClick={false}
 				preventScrolling={false}
-				nodesDraggable={true} // Allow nodes to be dragged
+				nodesDraggable={true}
 				nodesConnectable={false}
 				elementsSelectable={true}
-				proOptions={{hideAttribution: true}}
+				proOptions={{ hideAttribution: true }}
 			/>
 		</div>
 	);
 }
+
