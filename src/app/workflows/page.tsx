@@ -127,7 +127,7 @@ export default function DashboardPage() {
                     <button
                         onClick={handleCreateNew}
                         disabled={creating}
-                        className="flex items-center gap-2 border border-[#dfff4f] text-[#dfff4f] px-4 py-1.5 rounded-lg font-bold text-xs hover:bg-[#dfff4f] hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        className="flex items-center gap-2 border border-yellow-100 text-yellow-100 px-4 py-1.5 rounded-lg font-bold text-xs hover:bg-yellow-100 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                         {creating ? "Creating..." : "Create New File"}
                     </button>
@@ -146,7 +146,7 @@ export default function DashboardPage() {
                                 <Link
                                     key={demo.id}
                                     href={`/workflows/${demo.id}`}
-                                    className="group relative min-w-[200px] h-[140px] rounded-xl overflow-hidden border border-white/10 hover:border-[#dfff4f]/50 transition-all hover:-translate-y-1 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]">
+                                    className="group relative min-w-[200px] h-[140px] rounded-xl overflow-hidden border border-white/10 hover:border-yellow-100/50 transition-all hover:-translate-y-1 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]">
                                     {/* Content */}
                                     <div className="relative h-full p-4 flex flex-col">
                                         {/* Thumbnail/Icon */}
