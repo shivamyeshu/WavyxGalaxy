@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import {Search, Type, ImageIcon, Bot, Crop, Video, Film} from "lucide-react";
+import {Search, Type, ImageIcon, Bot, Crop, Video, Film, Frame} from "lucide-react";
 import {cn} from "@/lib/utils";
 
 interface SidebarNodeListProps {
@@ -134,7 +134,26 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						)}
 					</div>
 
-					{/* 6. RUN ANY LLM NODE */}
+					{/* 6. EXTRACT FRAME NODE */}
+					<div
+						className={cn(
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
+						)}
+						draggable
+						onDragStart={(e) => onDragStart(e, "extractFrameNode")}>
+						<div className="w-8 h-8 rounded bg-yellow-500/10 flex items-center justify-center text-yellow-400 group-hover:text-yellow-300">
+							<Frame size={18} />
+						</div>
+						{!isCollapsed && (
+							<div>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Extract Frame</p>
+								<p className="text-[10px] text-white/40">Extract specific frame by number</p>
+							</div>
+						)}
+					</div>
+
+					{/* 7. RUN ANY LLM NODE */}
 					<div
 						className={cn(
 							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",

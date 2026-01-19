@@ -23,6 +23,7 @@ import ImageNode from "@/components/workflow/nodes/ImageNode";
 import CropImageNode from "@/components/workflow/nodes/CropImageNode";
 import VideoNode from "@/components/workflow/nodes/VideoNode";
 import CropAndExtractFramesNode from "@/components/workflow/nodes/CropAndExtractFramesNode";
+import ExtractFrameNode from "@/components/workflow/nodes/ExtractFrameNode";
 import LLMNode from "@/components/workflow/nodes/LLMNode";
 import { useWorkflowStore } from "@/store/workflowStore";
 import CanvasControls from "./CanvasControls";
@@ -35,6 +36,7 @@ const nodeTypes = {
   cropImageNode: CropImageNode,
   videoNode: VideoNode,
   cropAndExtractFramesNode: CropAndExtractFramesNode,
+  extractFrameNode: ExtractFrameNode,
   llmNode: LLMNode,
 };
 
@@ -68,7 +70,7 @@ function FlowContent() {
 
       // Image handle
       if (th?.startsWith("image")) {
-        return sourceNode.type === "imageNode" || sourceNode.type === "cropImageNode" || sourceNode.type === "cropAndExtractFramesNode";
+        return sourceNode.type === "imageNode" || sourceNode.type === "cropImageNode" || sourceNode.type === "cropAndExtractFramesNode" || sourceNode.type === "extractFrameNode";
       }
 
       // Video handle
@@ -79,6 +81,11 @@ function FlowContent() {
       // Frames output handle
       if (th === "frames-output") {
         return sourceNode.type === "cropAndExtractFramesNode";
+      }
+
+      // Image output handle (from ExtractFrameNode)
+      if (th === "image-output") {
+        return sourceNode.type === "extractFrameNode";
       }
 
       // Prompt handle
@@ -139,6 +146,9 @@ function FlowContent() {
           break;
         case "cropAndExtractFramesNode":
           newNode = { id: newNodeId, type: "cropAndExtractFramesNode", position, data: { label: "Crop & Extract Frames", status: "idle", cropX: 0, cropY: 0, cropWidth: 100, cropHeight: 100, framesPerSecond: 1 } };
+          break;
+        case "extractFrameNode":
+          newNode = { id: newNodeId, type: "extractFrameNode", position, data: { label: "Extract Frame", status: "idle", frameNumber: 0 } };
           break;
         default:
           newNode = { id: newNodeId, type: "llmNode", position, data: { label: "Gemini Worker", status: "idle", model: "gemini-1.5-flash", temperature: 0.7, viewMode: "single", outputs: [], imageHandleCount: 1 } };

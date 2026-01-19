@@ -83,6 +83,13 @@ export interface CropAndExtractFramesNodeData extends BaseNodeData {
     extractedFrames?: string[]; // Array of extracted frame image URLs
 }
 
+// -- Extract Single Frame Node --
+export interface ExtractFrameNodeData extends BaseNodeData {
+    videoUrl?: string;         // Input video URL
+    frameNumber?: number;      // Frame number to extract (0-indexed)
+    extractedFrame?: string;   // Single extracted frame image URL
+}
+
 // -- LLM / Generation Node --
 export interface LLMNodeData extends BaseNodeData {
     // Configuration
@@ -118,9 +125,10 @@ export type ImageNodeType = Node<ImageNodeData, 'imageNode'>;
 export type CropImageNodeType = Node<CropImageNodeData, 'cropImageNode'>;
 export type VideoNodeType = Node<VideoNodeData, 'videoNode'>;
 export type CropAndExtractFramesNodeType = Node<CropAndExtractFramesNodeData, 'cropAndExtractFramesNode'>;
+export type ExtractFrameNodeType = Node<ExtractFrameNodeData, 'extractFrameNode'>;
 export type LLMNodeType = Node<LLMNodeData, 'llmNode'>;
 // Union type for the Editor
-export type AppNodeData = TextNodeData | ImageNodeData | CropImageNodeData | VideoNodeData | CropAndExtractFramesNodeData | LLMNodeData;
+export type AppNodeData = TextNodeData | ImageNodeData | CropImageNodeData | VideoNodeData | CropAndExtractFramesNodeData | ExtractFrameNodeData | LLMNodeData;
 export type AppNode = Node<AppNodeData>;
 
 
