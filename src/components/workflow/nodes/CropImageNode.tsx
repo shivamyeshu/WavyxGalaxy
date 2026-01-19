@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Crop, Loader2, AlertCircle, MoreHorizontal, Trash2, Eye, X } from "lucide-react";
+import { Crop, Loader2, AlertCircle, MoreHorizontal, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkflowStore } from "@/store/workflowStore";
 import { useReactFlow } from "@xyflow/react";
@@ -25,7 +25,6 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
   const { getEdges, getNodes } = useReactFlow();
 
   const [showMenu, setShowMenu] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -87,10 +86,46 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
 
       const croppedBase64 = canvas.toDataURL("image/png");
 
-      updateNodeData(id, {
-        croppedImage: croppedBase64,
-        status: "success",
-      });
+      // Upload cropped image to Cloudinary CDN
+      try {
+        // Convert base64 to blob
+        const response = await fetch(croppedBase64);
+        const blob = await response.blob();
+        const file = new File([blob], `cropped-${Date.now()}.png`, { type: 'image/png' });
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await fetch('/api/image/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          const cdnUrl = uploadResult.image.cdnUrl;
+          
+          console.log("[CropImageNode] Cropped image uploaded to CDN:", cdnUrl);
+
+          updateNodeData(id, {
+            croppedImage: cdnUrl, // Store CDN URL instead of base64
+            status: "success",
+          });
+        } else {
+          // Fallback to base64 if CDN upload fails
+          updateNodeData(id, {
+            croppedImage: croppedBase64,
+            status: "success",
+          });
+        }
+      } catch (uploadError) {
+        console.error("CDN upload error, using base64 fallback:", uploadError);
+        // Fallback to base64 if upload fails
+        updateNodeData(id, {
+          croppedImage: croppedBase64,
+          status: "success",
+        });
+      }
     } catch (error) {
       console.error("Crop error:", error);
       updateNodeData(id, {
@@ -108,11 +143,12 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
     const nodes = getNodes();
     const incomingEdge = edges.find((e) => e.target === id && e.targetHandle === "image-input");
 
-    if (incomingEdge) {
-      const sourceNode = nodes.find((n) => n.id === incomingEdge.source);
-      if (sourceNode) {
-        const sourceData = sourceNode.data as any;
-        const newImage = sourceData?.file?.url || sourceData?.image || sourceData?.croppedImage || sourceData?.output;
+      if (incomingEdge) {
+        const sourceNode = nodes.find((n) => n.id === incomingEdge.source);
+        if (sourceNode) {
+          const sourceData = sourceNode.data as Record<string, unknown>;
+          const fileData = sourceData?.file as { url?: string } | undefined;
+          const newImage = (fileData?.url || sourceData?.image || sourceData?.croppedImage || sourceData?.output) as string | undefined;
 
         if (newImage && typeof newImage === "string" && newImage !== originalImage) {
           console.log("[CropNode] New image detected:", newImage.substring(0, 50) + "...");
@@ -198,7 +234,7 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
                   max="100"
                   step="1"
                   value={data[field as keyof CropImageData] ?? (field.includes("Width") || field.includes("Height") ? 100 : 0)}
-                  onChange={(e) => handleParameterChange(field as any, parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handleParameterChange(field as "cropX" | "cropY" | "cropWidth" | "cropHeight", parseFloat(e.target.value) || 0)}
                   className="w-full bg-[#0a0a0a] text-white text-xs rounded-lg border border-white/10 px-2 py-1.5 focus:outline-none focus:border-[#dfff4f]/50"
                   disabled={!hasImage}
                 />
@@ -238,37 +274,28 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
           )}
         </div>
 
-        {/* Preview */}
+        {/* Preview - Auto show after crop */}
         {croppedImage && (
           <div className="space-y-2 mt-4">
-            <button
-              onClick={() => setShowPreview(!showPreview)}
-              className="w-full flex items-center justify-center gap-2 py-2 bg-[#0a0a0a] hover:bg-[#111] border border-white/10 hover:border-[#dfff4f]/50 rounded-lg transition-all"
-            >
-              <Eye size={14} className="text-white/70" />
-              <span className="text-xs font-medium text-white/70 uppercase tracking-wide">
-                {showPreview ? "Hide" : "View"} Cropped Image
-              </span>
-            </button>
-
-            {showPreview && (
-              <div className="relative group">
-                <img
-                  src={croppedImage}
-                  alt="Cropped result"
-                  className="w-full h-48 object-contain rounded-lg border border-white/10 bg-[#0a0a0a]"
-                />
-                <button
-                  onClick={() => setShowPreview(false)}
-                  className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-black/90 text-white rounded-full transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <X size={12} />
-                </button>
-                <div className="mt-2 text-[10px] text-white/40 text-center">
-                  Cropped: {cropWidth}% × {cropHeight}% at ({cropX}%, {cropY}%)
-                </div>
+            <div className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">
+              Cropped Result
+            </div>
+            <div className="relative group rounded-lg border border-white/10 bg-[#0a0a0a] overflow-hidden">
+              <img
+                src={croppedImage}
+                alt="Cropped result"
+                className="w-full h-auto max-h-[400px] object-contain rounded-lg"
+                onError={() => {
+                  console.error("[CropImageNode] Image load error:", croppedImage);
+                }}
+                onLoad={() => {
+                  console.log("[CropImageNode] Cropped image loaded successfully");
+                }}
+              />
+              <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-[10px] text-white/80 rounded">
+                {cropWidth}% × {cropHeight}% at ({cropX}%, {cropY}%)
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
