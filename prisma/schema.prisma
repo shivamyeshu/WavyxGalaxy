@@ -23,6 +23,7 @@ model User {
 
   // Relations
   workflows Workflow[]
+  videos    Video[]
 
   @@map("users")
 }
@@ -98,4 +99,30 @@ model NodeExecution {
 
   @@index([runId])
   @@map("node_executions")
+}
+
+// --------------------------------------------------------
+// 6. VIDEO (CDN Storage Metadata)
+// --------------------------------------------------------
+model Video {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id") @db.VarChar(255)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  filename    String   @db.VarChar(255)
+  originalName String  @map("original_name") @db.VarChar(255)
+  mimeType    String   @map("mime_type") @db.VarChar(100)
+  size        Int      // Size in bytes
+  duration    Float?   // Video duration in seconds
+  width       Int?     // Video width in pixels
+  height      Int?     // Video height in pixels
+  
+  cdnUrl      String   @map("cdn_url") @db.Text // Cloudinary/CDN URL
+  cdnPublicId String   @map("cdn_public_id") @db.VarChar(255) // Cloudinary public ID
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("videos")
 }

@@ -21,6 +21,8 @@ import "@xyflow/react/dist/style.css";
 import TextNode from "@/components/workflow/nodes/TextNode";
 import ImageNode from "@/components/workflow/nodes/ImageNode";
 import CropImageNode from "@/components/workflow/nodes/CropImageNode";
+import VideoNode from "@/components/workflow/nodes/VideoNode";
+import CropAndExtractFramesNode from "@/components/workflow/nodes/CropAndExtractFramesNode";
 import LLMNode from "@/components/workflow/nodes/LLMNode";
 import { useWorkflowStore } from "@/store/workflowStore";
 import CanvasControls from "./CanvasControls";
@@ -31,6 +33,8 @@ const nodeTypes = {
   textNode: TextNode,
   imageNode: ImageNode,
   cropImageNode: CropImageNode,
+  videoNode: VideoNode,
+  cropAndExtractFramesNode: CropAndExtractFramesNode,
   llmNode: LLMNode,
 };
 
@@ -64,7 +68,17 @@ function FlowContent() {
 
       // Image handle
       if (th?.startsWith("image")) {
-        return sourceNode.type === "imageNode" || sourceNode.type === "cropImageNode";
+        return sourceNode.type === "imageNode" || sourceNode.type === "cropImageNode" || sourceNode.type === "cropAndExtractFramesNode";
+      }
+
+      // Video handle
+      if (th === "video-input" || th?.startsWith("video")) {
+        return sourceNode.type === "videoNode";
+      }
+
+      // Frames output handle
+      if (th === "frames-output") {
+        return sourceNode.type === "cropAndExtractFramesNode";
       }
 
       // Prompt handle
@@ -119,6 +133,12 @@ function FlowContent() {
           break;
         case "cropImageNode":
           newNode = { id: newNodeId, type: "cropImageNode", position, data: { label: "Crop Image", status: "idle", cropX: 0, cropY: 0, cropWidth: 100, cropHeight: 100 } };
+          break;
+        case "videoNode":
+          newNode = { id: newNodeId, type: "videoNode", position, data: { label: "Video Input", status: "idle" } };
+          break;
+        case "cropAndExtractFramesNode":
+          newNode = { id: newNodeId, type: "cropAndExtractFramesNode", position, data: { label: "Crop & Extract Frames", status: "idle", cropX: 0, cropY: 0, cropWidth: 100, cropHeight: 100, framesPerSecond: 1 } };
           break;
         default:
           newNode = { id: newNodeId, type: "llmNode", position, data: { label: "Gemini Worker", status: "idle", model: "gemini-1.5-flash", temperature: 0.7, viewMode: "single", outputs: [], imageHandleCount: 1 } };

@@ -60,6 +60,29 @@ export interface CropImageNodeData extends BaseNodeData {
     cropHeight?: number;        // Height percentage (1-100)
 }
 
+// -- Video Upload Node --
+export interface VideoNodeData extends BaseNodeData {
+    videoUrl?: string;         // CDN URL
+    videoId?: string;          // Database ID
+    file?: {
+        name: string;
+        type: string;
+        size: number;
+        duration?: number;     // Video duration in seconds
+    };
+}
+
+// -- Crop and Extract Frames Node --
+export interface CropAndExtractFramesNodeData extends BaseNodeData {
+    videoUrl?: string;         // Input video URL
+    cropX?: number;            // X position percentage (0-100)
+    cropY?: number;            // Y position percentage (0-100)
+    cropWidth?: number;        // Width percentage (1-100)
+    cropHeight?: number;       // Height percentage (1-100)
+    framesPerSecond?: number;  // Frames to extract per second (0.1-10)
+    extractedFrames?: string[]; // Array of extracted frame image URLs
+}
+
 // -- LLM / Generation Node --
 export interface LLMNodeData extends BaseNodeData {
     // Configuration
@@ -93,9 +116,11 @@ export interface LLMNodeData extends BaseNodeData {
 export type TextNodeType = Node<TextNodeData, 'textNode'>;
 export type ImageNodeType = Node<ImageNodeData, 'imageNode'>;
 export type CropImageNodeType = Node<CropImageNodeData, 'cropImageNode'>;
+export type VideoNodeType = Node<VideoNodeData, 'videoNode'>;
+export type CropAndExtractFramesNodeType = Node<CropAndExtractFramesNodeData, 'cropAndExtractFramesNode'>;
 export type LLMNodeType = Node<LLMNodeData, 'llmNode'>;
 // Union type for the Editor
-export type AppNodeData = TextNodeData | ImageNodeData | CropImageNodeData | LLMNodeData;
+export type AppNodeData = TextNodeData | ImageNodeData | CropImageNodeData | VideoNodeData | CropAndExtractFramesNodeData | LLMNodeData;
 export type AppNode = Node<AppNodeData>;
 
 
