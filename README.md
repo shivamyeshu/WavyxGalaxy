@@ -138,6 +138,11 @@ TRANSLOADIT_TEMPLATE_ID=asm_...
 # Trigger.dev (Execution Engine)
 TRIGGER_SECRET_KEY=tr_dev_...
 TRIGGER_PROJECT_REF=prj_...
+
+# Cloudinary (CDN for Video/Image Storage)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 ### Run Development Server

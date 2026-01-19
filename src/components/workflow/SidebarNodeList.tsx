@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import {Search, Type, ImageIcon, Bot, Crop} from "lucide-react";
+import {Search, Type, ImageIcon, Bot, Crop, Video, Film} from "lucide-react";
 import {cn} from "@/lib/utils";
 
 interface SidebarNodeListProps {
@@ -96,7 +96,45 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						)}
 					</div>
 
-					{/* 4. RUN ANY LLM NODE */}
+					{/* 4. VIDEO NODE */}
+					<div
+						className={cn(
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
+						)}
+						draggable
+						onDragStart={(e) => onDragStart(e, "videoNode")}>
+						<div className="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:text-blue-300">
+							<Video size={18} />
+						</div>
+						{!isCollapsed && (
+							<div>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Video</p>
+								<p className="text-[10px] text-white/40">Upload to CDN</p>
+							</div>
+						)}
+					</div>
+
+					{/* 5. CROP & EXTRACT FRAMES NODE */}
+					<div
+						className={cn(
+							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
+						)}
+						draggable
+						onDragStart={(e) => onDragStart(e, "cropAndExtractFramesNode")}>
+						<div className="w-8 h-8 rounded bg-green-500/10 flex items-center justify-center text-green-400 group-hover:text-green-300">
+							<Film size={18} />
+						</div>
+						{!isCollapsed && (
+							<div>
+								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Crop & Extract</p>
+								<p className="text-[10px] text-white/40">Extract frames via Trigger.dev</p>
+							</div>
+						)}
+					</div>
+
+					{/* 6. RUN ANY LLM NODE */}
 					<div
 						className={cn(
 							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
