@@ -26,7 +26,7 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 					<button
 						onClick={onCreateNew}
 						disabled={creating}
-						className="w-full flex items-center justify-center gap-2 bg-[#dfff4f] text-black px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+						className="w-full flex items-center justify-center gap-2 bg-yellow-100 text-black px-4 py-2.5 rounded-lg font-bold text-sm hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
 						{creating ? (
 							<>
 								<Loader2 size={16} className="animate-spin" />

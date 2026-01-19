@@ -126,12 +126,12 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
                             value={workflowIdInput}
                             onChange={(e) => setWorkflowIdInput(e.target.value)}
                             placeholder="Enter Workflow ID"
-                            className="flex-1 bg-[#222] text-white px-3 py-2 rounded-lg border border-white/10 focus:border-[#dfff4f] focus:outline-none text-sm"
+                            className="flex-1 bg-[#222] text-white px-3 py-2 rounded-lg border border-white/10 focus:border-yellow-100 focus:outline-none text-sm"
                         />
                         <button
                             onClick={handleLoadFromDB}
                             disabled={isLoading}
-                            className="px-4 py-2 bg-[#dfff4f] text-black font-bold rounded-lg hover:bg-white transition-all disabled:opacity-50 text-sm">
+                            className="px-4 py-2 bg-yellow-100 text-black font-bold rounded-lg hover:bg-white transition-all disabled:opacity-50 text-sm">
                             {isLoading ? <Loader2 size={16} className="animate-spin" /> : "LOAD"}
                         </button>
                     </div>
@@ -150,7 +150,7 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
                 {/* Import from File */}
                 <div>
                     <label className="block text-sm font-medium text-white/70 mb-2">Import from File</label>
-                    <label className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-[#dfff4f] hover:bg-white/5 transition-all">
+                    <label className="flex items-center justify-center gap-2 px-4 py-3 bg-[#222] border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-yellow-100 hover:bg-white/5 transition-all">
                         <Upload size={16} className="text-white/70" />
                         <span className="text-sm font-medium text-white/70">Choose JSON File</span>
                         <input type="file" accept=".json" onChange={handleFileUpload} className="hidden" />

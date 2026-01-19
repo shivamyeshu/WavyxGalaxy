@@ -105,7 +105,7 @@ export default function Header() {
 								}
 							}}
 							autoFocus
-							className="bg-[#222] text-sm font-bold text-white px-2 py-1 rounded border border-[#dfff4f] focus:outline-none"
+							className="bg-[#222] text-sm font-bold text-white px-2 py-1 rounded border border-yellow-100 focus:outline-none"
 						/>
 					) : (
 						<h1
@@ -131,7 +131,7 @@ export default function Header() {
 					<button
 						onClick={handleShare}
 						className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-white/10 text-white text-xs font-bold rounded-lg hover:bg-white/10 transition-all group">
-						<Share2 size={14} className="group-hover:text-[#dfff4f] transition-colors" />
+						<Share2 size={14} className="group-hover:text-yellow-100 transition-colors" />
 						SHARE
 					</button>
 
@@ -139,7 +139,7 @@ export default function Header() {
 					<button
 						onClick={handleSave}
 						disabled={isSaving}
-						className="flex items-center gap-2 px-4 py-2 bg-[#dfff4f] text-black text-xs font-bold rounded-lg hover:bg-white transition-all disabled:opacity-50 hover:scale-105 active:scale-95">
+						className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-black text-xs font-bold rounded-lg hover:bg-white transition-all disabled:opacity-50 hover:scale-105 active:scale-95">
 						{isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
 						{isSaving ? "SAVING..." : "SAVE"}
 					</button>

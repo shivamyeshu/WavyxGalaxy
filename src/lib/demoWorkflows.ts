@@ -46,8 +46,8 @@ export const DEMO_WORKFLOWS = [
                 },
 
                 // -----------------------------------------------------------
-                // 2. THE PROMPTS (Instructions as Text Nodes) 
-                // -----------------------------------------------------------
+                // 2. PROMPT NODES (System Instructions)
+                // -----------------------------------------------------------  
                 {
                     id: 'prompt-merger',
                     type: 'textNode',

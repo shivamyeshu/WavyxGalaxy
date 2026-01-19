@@ -23,7 +23,7 @@ export const orchestrator = task({
         const graph = run.workflow.data as any;
         const nodes: NodeData[] = graph.nodes;
 
-        console.log(`🚀 Starting execution for workflow: ${run.workflow.name}`);
+        console.log(`Starting execution for workflow: ${run.workflow.name}`);
 
         // Iterate and Execute
         for (const node of nodes) {
@@ -46,7 +46,7 @@ export const orchestrator = task({
             try {
                 // Execute the AI Task
                 const result = await aiGenerator.triggerAndWait({
-                    prompt: node.data.prompt || "Explain Quantum Computing",
+                    prompt: node.data.prompt || "Explain Photosynth in detail.",
                 });
 
                 // FIX: Cast result to 'any' to satisfy Prisma's strict JSON type

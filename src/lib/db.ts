@@ -1,7 +1,7 @@
 import { Pool } from 'pg';
 
-// 🔍 DEBUGGING: Print the URL to the server console
-console.log("🔍 CONNECTION STRING:", process.env.DATABASE_URL);
+// DEBUGGING: Print the URL to the server console
+console.log("CONNECTION STRING:", process.env.DATABASE_URL);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
