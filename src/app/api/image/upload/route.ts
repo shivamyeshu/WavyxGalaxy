@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { v2 as cloudinary } from 'cloudinary';
-import prisma from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Configure Cloudinary (do it here to ensure env vars are loaded)
+    // Configure Cloudinary
     cloudinary.config({
       cloud_name: cloudName,
       api_key: apiKey,
@@ -43,25 +42,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Strict validation: Only allow video files, reject images and audio
-    const allowedVideoTypes = [
-      'video/mp4',
-      'video/webm',
-      'video/ogg',
-      'video/quicktime',
-      'video/x-msvideo',
-      'video/x-ms-wmv',
-      'video/mpeg',
-      'video/x-matroska',
-      'video/3gpp',
+    // Validate image file
+    const allowedImageTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
     ];
     
-    const allowedExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.wmv', '.mpeg', '.mpg', '.mkv', '.3gp'];
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
-    if (!file.type.startsWith('video/') || !allowedVideoTypes.includes(file.type)) {
+    if (!file.type.startsWith('image/') || !allowedImageTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Only video files are allowed (MP4, WebM, MOV, AVI, etc.). Images and audio files are not supported.' },
+        { error: 'Only image files are allowed (JPEG, PNG, GIF, WebP, SVG).' },
         { status: 400 }
       );
     }
@@ -81,14 +77,13 @@ export async function POST(req: NextRequest) {
     const uploadResult = await new Promise<{
       public_id: string;
       secure_url: string;
-      duration?: number;
       width?: number;
       height?: number;
     }>((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          resource_type: 'video',
-          folder: `weavy-videos/${userId}`,
+          resource_type: 'image',
+          folder: `weavy-images/${userId}`,
           public_id: `${Date.now()}-${file.name.replace(/\.[^/.]+$/, '')}`,
           overwrite: false,
         },
@@ -101,64 +96,25 @@ export async function POST(req: NextRequest) {
       uploadStream.end(buffer);
     });
 
-    // Get video metadata from Cloudinary x 
-    const videoInfo = await cloudinary.api.resource(uploadResult.public_id, {
-      resource_type: 'video',
-    });
-
-    // Ensure user exists in database
-    let user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      const clerkUser = await currentUser();
-      if (!clerkUser) {
-        return NextResponse.json({ error: 'User not found' }, { status: 401 });
-      }
-
-      user = await prisma.user.create({
-        data: {
-          id: userId,
-          email: clerkUser.emailAddresses[0]?.emailAddress || `${userId}@temp.com`,
-          firstName: clerkUser.firstName || null,
-          lastName: clerkUser.lastName || null,
-        },
-      });
-    }
-
-    // Store video metadata in database
-    const videoRecord = await prisma.video.create({
-      data: {
-        userId: user.id,
-        filename: uploadResult.public_id,
-        originalName: file.name,
-        mimeType: file.type,
-        size: file.size,
-        duration: videoInfo.duration || null,
-        width: videoInfo.width || null,
-        height: videoInfo.height || null,
-        cdnUrl: uploadResult.secure_url,
-        cdnPublicId: uploadResult.public_id,
-      },
+    // Get image metadata from Cloudinary
+    const imageInfo = await cloudinary.api.resource(uploadResult.public_id, {
+      resource_type: 'image',
     });
 
     return NextResponse.json({
       success: true,
-      video: {
-        id: videoRecord.id,
-        cdnUrl: videoRecord.cdnUrl,
-        cdnPublicId: videoRecord.cdnPublicId,
-        originalName: videoRecord.originalName,
-        duration: videoRecord.duration,
-        width: videoRecord.width,
-        height: videoRecord.height,
-        size: videoRecord.size,
+      image: {
+        cdnUrl: uploadResult.secure_url,
+        cdnPublicId: uploadResult.public_id,
+        originalName: file.name,
+        width: imageInfo.width || uploadResult.width,
+        height: imageInfo.height || uploadResult.height,
+        size: file.size,
       },
     });
   } catch (error: unknown) {
-    console.error('Video upload error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to upload video';
+    console.error('Image upload error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upload image';
     return NextResponse.json(
       { error: errorMessage },
       { status: 500 }

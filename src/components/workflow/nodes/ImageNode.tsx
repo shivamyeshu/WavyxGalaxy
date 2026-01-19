@@ -35,7 +35,7 @@ export default function ImageNode({ id, data, isConnectable, selected }: NodePro
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // File upload handler
+  // File upload handler - Upload to Cloudinary CDN
   const onFileChange = useCallback(
     async (evt: React.ChangeEvent<HTMLInputElement>) => {
       const file = evt.target.files?.[0];
@@ -44,25 +44,39 @@ export default function ImageNode({ id, data, isConnectable, selected }: NodePro
       try {
         updateNodeData(id, { status: "loading" });
 
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
+        // Upload to Cloudinary CDN
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/image/upload', {
+          method: 'POST',
+          body: formData,
         });
 
-        console.log("[ImageNode] Uploaded image base64:", base64.substring(0, 50) + "...");
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Upload failed');
+        }
+
+        const result = await response.json();
+
+        console.log("[ImageNode] Uploaded image to CDN:", result.image.cdnUrl);
 
         updateNodeData(id, {
-          image: base64,
-          file: { name: file.name, type: file.type },
+          image: result.image.cdnUrl, // Store CDN URL instead of base64
+          file: { 
+            name: result.image.originalName,
+            type: file.type,
+            url: result.image.cdnUrl, // Also store in file.url for Gemini compatibility
+          },
           status: "success",
         });
-      } catch (err) {
-        console.error("Upload error:", err);
+      } catch (err: unknown) {
+        console.error("Image upload error:", err);
+        const errorMessage = err instanceof Error ? err.message : "Failed to upload image";
         updateNodeData(id, {
           status: "error",
-          errorMessage: "Failed to process image",
+          errorMessage,
         });
       }
     },
