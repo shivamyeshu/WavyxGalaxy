@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       uploadStream.end(buffer);
     });
 
-    // Get video metadata from Cloudinary
+    // Get video metadata from Cloudinary x 
     const videoInfo = await cloudinary.api.resource(uploadResult.public_id, {
       resource_type: 'video',
     });
