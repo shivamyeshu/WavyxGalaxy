@@ -5,6 +5,7 @@ import {X, Loader2, Upload} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {loadWorkflowAction} from "@/app/actions/workflowActions";
 import type {LoadWorkflowModalProps} from "@/lib/types";
+import toast from "react-hot-toast";
 
 export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalProps) {
     const {nodes: currentNodes, edges: currentEdges} = useWorkflowStore();
@@ -23,7 +24,7 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
     // LOAD FROM DATABASE
     const handleLoadFromDB = async () => {
         if (!workflowIdInput.trim()) {
-            alert("Please enter a workflow ID!");
+            toast.error("Please enter a workflow ID!");
             return;
         }
 
@@ -53,14 +54,14 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
                     workflowId: workflowIdInput,
                 });
 
-                alert("Workflow loaded successfully!");
+                toast.success("Workflow loaded successfully!");
                 onClose();
             } else {
-                alert(`${result.error || "Failed to load workflow"}`);
+                toast.error(`${result.error || "Failed to load workflow"}`);
             }
         } catch (error) {
             console.error(error);
-            alert("Something went wrong while loading.");
+            toast.error("Something went wrong while loading.");
         } finally {
             setIsLoading(false);
         }
@@ -79,7 +80,7 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
 
                 // Validate structure
                 if (!workflowData.nodes || !workflowData.edges) {
-                    alert("Invalid workflow file format!");
+                    toast.error("Invalid workflow file format!");
                     return;
                 }
 
@@ -96,11 +97,11 @@ export default function LoadWorkflowModal({isOpen, onClose}: LoadWorkflowModalPr
                     workflowId: null, // Clear ID since it's imported
                 });
 
-                alert("Workflow imported successfully!");
+                toast.success("Workflow imported successfully!");
                 onClose();
             } catch (error) {
                 console.error(error);
-                alert("Failed to parse workflow file!");
+                toast.error("Failed to parse workflow file!");
             }
         };
         reader.readAsText(file);

@@ -5,6 +5,7 @@ import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Frame, Loader2, AlertCircle, MoreHorizontal, Trash2, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkflowStore } from "@/store/workflowStore";
+import toast from "react-hot-toast";
 
 type ExtractFrameData = {
   label?: string;
@@ -48,21 +49,24 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
 
   // Detect incoming video from connected node
   useEffect(() => {
-    const incomingEdge = edges.find((e) => e.target === id && e.targetHandle === "video-input");
+    const incomingEdge = edges.find((e) => e.target === id);
 
     if (incomingEdge) {
       const sourceNode = nodes.find((n) => n.id === incomingEdge.source);
       if (sourceNode) {
         const sourceData = sourceNode.data as Record<string, unknown>;
-        const newVideoUrl = (sourceData?.videoUrl || sourceData?.cdnUrl || sourceData?.output) as string | undefined;
+        // Check multiple possible video URL fields from different node types
+        const newVideoUrl = (sourceData?.videoUrl || sourceData?.cdnUrl || sourceData?.output || sourceData?.video) as string | undefined;
 
         if (newVideoUrl && typeof newVideoUrl === "string" && newVideoUrl !== videoUrl) {
-          console.log("[ExtractFrameNode] New video detected:", newVideoUrl.substring(0, 50) + "...");
+          console.log("[ExtractFrameNode] New video detected from node:", incomingEdge.source);
+          console.log("[ExtractFrameNode] Video URL:", newVideoUrl.substring(0, 50) + "...");
           updateNodeData(id, {
             videoUrl: newVideoUrl,
             extractedFrame: undefined, // Reset previous frame
             status: "idle",
           });
+          toast.success("Video connected to Extract Frame node!");
         }
       }
     } else {
@@ -80,11 +84,18 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
 
   // Extract single frame via API
   const extractFrame = useCallback(async () => {
-    if (!videoUrl || frameNumber < 0) return;
+    if (!videoUrl || frameNumber < 0) {
+      toast.error("Video URL or frame number is invalid");
+      return;
+    }
 
+    console.log("[ExtractFrame] Starting extraction with params:", { videoUrl, frameNumber });
     updateNodeData(id, { status: "loading" });
+    const loadingToast = toast.loading("Extracting frame...");
 
     try {
+      console.log("🎬 [ExtractFrame] Sending request with frameNumber:", frameNumber);
+      
       const response = await fetch('/api/video/extract-frame', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,28 +107,51 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Frame extraction failed');
+        console.error("❌ [ExtractFrame] API error:", error);
+        throw new Error(error.error || `API error: ${response.status}`);
       }
 
       const result = await response.json();
-      
-      console.log("[ExtractFrameNode] Frame extraction result:", result);
+      console.log("✅ [ExtractFrame] Frame extraction result:", result);
 
       if (!result.frameUrl) {
         throw new Error('No frame URL returned from server');
       }
 
+      // Validate that we got a real frame, not just a thumbnail
+      // Check if URL contains frame extraction parameters
+      if (!result.frameUrl.includes('f_jpg') && !result.frameUrl.includes('so_')) {
+        console.warn("⚠️ [ExtractFrame] Warning: URL might be a thumbnail, not extracted frame:", result.frameUrl);
+      }
+
+      console.log("[ExtractFrame] Frame URL params:", {
+        method: result.method,
+        timestamp: result.timestamp,
+        frameNumber: result.frameNumber,
+        duration: result.duration,
+        estimatedFPS: result.estimatedFPS,
+        hasFormat: result.frameUrl.includes('f_jpg'),
+        hasOffset: result.frameUrl.includes('so_'),
+        urlPreview: result.frameUrl.substring(0, 100),
+      });
+
       updateNodeData(id, {
         extractedFrame: result.frameUrl,
         status: "success",
       });
+      
+      toast.dismiss(loadingToast);
+      toast.success(`Frame #${frameNumber} extracted successfully!`);
     } catch (error: unknown) {
-      console.error("Frame extraction error:", error);
+      console.error("❌ [ExtractFrame] Extraction error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to extract frame";
       updateNodeData(id, {
         status: "error",
         errorMessage,
       });
+      
+      toast.dismiss(loadingToast);
+      toast.error(errorMessage);
     }
   }, [videoUrl, frameNumber, id, updateNodeData]);
 
@@ -135,7 +169,7 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
   return (
     <div
       className={cn(
-        "rounded-xl border bg-[#1a1a1a] min-w-[320px] shadow-xl transition-all duration-200",
+        "rounded-xl border bg-[#1a1a1a] w-[320px] shadow-xl transition-all duration-200",
         selected ? "border-[#dfff4f] ring-1 ring-[#dfff4f]/50" : "border-white/10 hover:border-white/30",
         data.status === "error" && "border-red-500 ring-1 ring-red-500/50"
       )}
@@ -193,18 +227,18 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
         {/* Frame Number Input */}
         <div>
           <label className="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-2 block">
-            Frame Number
+            Time (Seconds)
           </label>
           <input
             type="number"
             min="0"
-            step="1"
+            step="0.5"
             value={frameNumber}
-            onChange={(e) => handleFrameNumberChange(parseInt(e.target.value) || 0)}
+            onChange={(e) => handleFrameNumberChange(parseFloat(e.target.value) || 0)}
             className="w-full bg-[#0a0a0a] text-white text-sm rounded-lg border border-white/10 px-3 py-2 focus:outline-none focus:border-[#dfff4f]/50"
-            placeholder="Enter frame number (e.g., 0, 1, 2...)"
+            placeholder="Enter time in seconds (e.g., 0, 1, 2...)"
           />
-          <p className="text-[9px] text-white/40 mt-1">Enter the frame number you want to extract</p>
+          <p className="text-[9px] text-white/40 mt-1">1 = 1 second, 2 = 2 seconds, etc.</p>
         </div>
 
         {/* Action / Status */}

@@ -58,93 +58,52 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Get video info to determine FPS and duration
+    // Get video info to determine duration
     const videoInfo = await cloudinary.api.resource(publicId, {
       resource_type: 'video',
     });
 
     const duration = videoInfo.duration || 10; // Duration in seconds
-    
-    // Try to get FPS from video info, or use a default
-    // Cloudinary might not always provide FPS, so we'll estimate based on frame count
-    // Common video FPS: 24, 30, 60
-    // If we don't have FPS info, we'll estimate: assume 30 fps for calculation
-    const estimatedFPS = 30; // Default FPS assumption
-    const totalEstimatedFrames = Math.floor(duration * estimatedFPS);
 
-    // Validate frame number
-    if (frameNumber >= totalEstimatedFrames) {
+    // Validate frame number (frame number = seconds in this logic)
+    // So frame 1 = 1 second, frame 2 = 2 seconds, etc.
+    if (frameNumber > duration) {
       return NextResponse.json({ 
-        error: `Frame number ${frameNumber} exceeds estimated total frames (${totalEstimatedFrames}) for video duration ${duration.toFixed(2)}s` 
+        error: `Frame number ${frameNumber} exceeds video duration (${duration.toFixed(2)}s). Maximum frame number is ${Math.floor(duration)}.` 
       }, { status: 400 });
     }
 
-    // Calculate timestamp from frame number
-    // frameNumber / fps = timestamp in seconds
-    const timestamp = frameNumber / estimatedFPS;
+    // Direct mapping: frameNumber = timestamp in seconds
+    // No FPS calculation needed - user specifies time directly
+    const timestamp = frameNumber;
     
-    // Round timestamp to avoid very long decimal values that might cause issues
-    // Cloudinary accepts decimal values, but let's round to 3 decimal places for precision
-    const roundedTimestamp = Math.round(timestamp * 1000) / 1000;
+    // Round timestamp to 2 decimal places for Cloudinary
+    const roundedTimestamp = Math.round(timestamp * 100) / 100;
 
     // Extract the frame at the calculated timestamp
     try {
-      // console.log('[ExtractFrame] Extracting frame:', { publicId, frameNumber, timestamp, roundedTimestamp, duration });
+      console.log('[ExtractFrame] Extracting frame:', { publicId, frameNumber, timestamp: roundedTimestamp, duration, method: 'direct_seconds' });
       
-      // Use Cloudinary's video transformation to extract frame at specific timestamp
-      // Based on extract-frames route pattern: use number for start_offset and format together
-      // Cloudinary uses so_X parameter where X is the start offset in seconds
-      // The format parameter converts video frame to JPG image
-      const frameUrl = cloudinary.url(publicId, {
-        resource_type: 'video',
-        transformation: [
-          {
-            start_offset: Math.round(roundedTimestamp * 100) / 100, // Round to 2 decimal places like extract-frames
-            format: 'jpg', // This is CRITICAL - converts video frame to JPG image
-          }
-        ],
-        secure: true,
-      });
-
-      // Verify that format is in the URL - if not, manually add it
-      // Cloudinary URL should have f_jpg in the transformation path for image extraction
-      let finalUrl = frameUrl;
-      if (!frameUrl.includes('f_jpg') && !frameUrl.includes('/jpg')) {
-        // If format isn't applied, manually add it to the URL
-        // Cloudinary URL structure: .../upload/so_X/f_jpg/v1/... or .../upload/so_X,f_jpg/v1/...
-        // console.warn('[ExtractFrame] Format not found in URL, fixing manually:', frameUrl);
-        
-        // Insert f_jpg after start_offset (so_X)
-        // Pattern: /upload/so_X/v1/... should become /upload/so_X/f_jpg/v1/...
-        if (frameUrl.includes('/upload/so_')) {
-          finalUrl = frameUrl.replace(/\/upload\/(so_\d+\.?\d*)\//, '/upload/$1/f_jpg/');
-        } else {
-          // Alternative pattern if structure is different
-          finalUrl = frameUrl.replace(/(so_\d+\.?\d*)/, '$1/f_jpg');
-        }
-        
-        // Also ensure the URL ends with .jpg extension for proper image serving
-        if (!finalUrl.match(/\.jpg(\?|$)/)) {
-          // Remove query parameters and file extension, then add .jpg
-          const urlWithoutQuery = finalUrl.split('?')[0];
-          const baseUrl = urlWithoutQuery.replace(/\.[^/.]+$/, '');
-          const queryString = frameUrl.includes('?') ? frameUrl.split('?')[1] : '';
-          finalUrl = baseUrl + '.jpg' + (queryString ? '?' + queryString : '');
-        }
-      }
-
-      // console.log('[ExtractFrame] Final frame URL:', finalUrl);
-      // console.log('[ExtractFrame] Original frame URL:', frameUrl);
+      // IMPORTANT: For Cloudinary, we MUST use direct URL construction with so_ parameter
+      // The SDK's cloudinary.url() might not properly include the start_offset
+      // Format: /upload/so_{seconds},f_jpg,q_auto/
+      
+      // Build the direct Cloudinary URL with all transformations in the correct order
+      const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+      const directFrameUrl = `https://res.cloudinary.com/${cloudName}/video/upload/so_${roundedTimestamp},f_jpg,q_auto/${publicId}.jpg`;
+      
+      console.log('[ExtractFrame] Direct URL:', directFrameUrl);
+      console.log('[ExtractFrame] URL contains so_: ', directFrameUrl.includes(`so_${roundedTimestamp}`));
+      console.log('[ExtractFrame] URL contains f_jpg: ', directFrameUrl.includes('f_jpg'));
 
       return NextResponse.json({
         success: true,
-        frameUrl: finalUrl, // Return the fixed URL with format
+        frameUrl: directFrameUrl,
         frameNumber,
-        timestamp: roundedTimestamp.toFixed(3),
+        timestamp: roundedTimestamp,
         duration,
-        estimatedFPS,
-        totalEstimatedFrames,
-        publicId, // For debugging
+        publicId,
+        method: 'direct_seconds',
       });
     } catch (err) {
       console.error('Failed to extract frame:', err);

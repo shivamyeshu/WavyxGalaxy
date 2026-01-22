@@ -135,7 +135,7 @@ export default function VideoNode({ id, data, isConnectable, selected }: NodePro
   return (
     <div
       className={cn(
-        "rounded-xl border bg-[#1a1a1a] min-w-[280px] shadow-xl transition-all duration-200",
+        "rounded-xl border bg-[#1a1a1a] w-[300px] shadow-xl transition-all duration-200",
         selected ? "border-[#dfff4f] ring-1 ring-[#dfff4f]/50" : "border-white/10 hover:border-white/30",
         data.status === "error" && "border-red-500 ring-1 ring-red-500/50"
       )}

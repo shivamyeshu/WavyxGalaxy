@@ -54,29 +54,31 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 							<Plus size={14} className="text-white/50 hover:text-white" />
 						</Link>
 						<Link
-							href="#"
-							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors">
-							<Users size={16} />
-							Shared with me
-						</Link>
-						<Link
-							href="#"
+							href="/apps"
 							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors">
 							<AppWindow size={16} />
 							Apps
 						</Link>
+						<button
+							disabled
+							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/20 cursor-not-allowed text-sm">
+							<Users size={16} />
+							Shared with me
+						</button>
 					</>
 				) : (
 					<>
 						<Link href="/workflows" className="flex justify-center p-2 rounded-lg bg-white/5 text-white">
 							<Folder size={18} />
 						</Link>
-						<Link href="#" className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
-							<Users size={18} />
-						</Link>
-						<Link href="#" className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
+						<Link href="/apps" className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
 							<AppWindow size={18} />
 						</Link>
+						<button
+							disabled
+							className="flex justify-center p-2 rounded-lg text-white/20 cursor-not-allowed">
+							<Users size={18} />
+						</button>
 					</>
 				)}
 			</nav>

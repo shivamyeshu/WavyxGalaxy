@@ -5,6 +5,7 @@ import {Save, Loader2, Share2, FolderOpen, Layers} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {saveWorkflowAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
+import toast from "react-hot-toast";
 
 export default function Header() {
 	
@@ -17,7 +18,7 @@ export default function Header() {
 	// --- HANDLE SAVE (Existing Logic) ---
 	const handleSave = async () => {
 		if (nodes.length === 0) {
-			alert("Canvas is empty!");
+			toast.error("Canvas is empty!");
 			return;
 		}
 
@@ -33,11 +34,11 @@ export default function Header() {
 
 			if (result.success && result.id) {
 				setWorkflowId(result.id);
-				alert(`Saved! (ID: ${result.id})`);
+				toast.success("Workflow saved successfully!");
 			} else if (result.success) {
-				alert("Saved, but no ID returned.");
+				toast.success("Saved, but no ID returned.");
 			} else {
-				alert(`Error: ${result.error}`);
+				toast.error(`Error: ${result.error}`);
 			}
 		} catch (error) {
 			console.error(error);
@@ -49,7 +50,7 @@ export default function Header() {
 	// --- HANDLE SHARE (Export as JSON) ---
 	const handleShare = useCallback(() => {
 		if (nodes.length === 0) {
-			alert("Nothing to share! The canvas is empty.");
+			toast.error("Nothing to share! The canvas is empty.");
 			return;
 		}
 

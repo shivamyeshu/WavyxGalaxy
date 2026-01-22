@@ -277,7 +277,7 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 	return (
 		<div
 			className={cn(
-				"rounded-xl border bg-[#1a1a1a] min-w-[320px] max-w-[400px] shadow-2xl transition-all duration-200 flex flex-col max-h-[600px]",
+				"rounded-xl border bg-[#1a1a1a] w-[320px] max-w-[400px] shadow-2xl transition-all duration-200 flex flex-col max-h-[600px]",
 				selected ? "border-[#dfff4f] ring-1 ring-[#dfff4f]/50" : "border-white/10 hover:border-white/30",
 				data.status === "error" && "border-red-500 ring-1 ring-red-500/50"
 			)}>

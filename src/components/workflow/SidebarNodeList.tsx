@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useState} from "react";
 import {Search, Type, ImageIcon, Bot, Crop, Video, Film, Frame} from "lucide-react";
 import {cn} from "@/lib/utils";
 import {useUser} from "@clerk/nextjs";
@@ -11,6 +11,7 @@ interface SidebarNodeListProps {
 
 const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 	const {user, isLoaded} = useUser();
+	const [searchQuery, setSearchQuery] = useState("");
 
 	const onDragStart = (event: React.DragEvent, nodeType: string) => {
 		event.dataTransfer.setData("application/reactflow", nodeType);
@@ -20,6 +21,70 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 	const displayName = user?.fullName || user?.firstName || "User";
 	const fallbackInitial = displayName?.[0]?.toUpperCase() || "U";
 	const avatarUrl = user?.imageUrl;
+
+	// Define all nodes
+	const allNodes = [
+		{
+			type: "textNode",
+			name: "Text",
+			description: "Input plain text",
+			icon: Type,
+			bgColor: "bg-blue-500/10",
+			textColor: "text-blue-400",
+			hoverColor: "group-hover:text-blue-300"
+		},
+		{
+			type: "imageNode",
+			name: "Image",
+			description: "Upload images",
+			icon: ImageIcon,
+			bgColor: "bg-purple-500/10",
+			textColor: "text-purple-400",
+			hoverColor: "group-hover:text-purple-300"
+		},
+		{
+			type: "cropImageNode",
+			name: "Crop Image",
+			description: "Crop Image",
+			icon: Crop,
+			bgColor: "bg-orange-500/10",
+			textColor: "text-orange-400",
+			hoverColor: "group-hover:text-orange-300"
+		},
+		{
+			type: "videoNode",
+			name: "Video",
+			description: "Video Input",
+			icon: Video,
+			bgColor: "bg-blue-500/10",
+			textColor: "text-blue-400",
+			hoverColor: "group-hover:text-blue-300"
+		},
+		{
+			type: "extractFrameNode",
+			name: "Extract Frame",
+			description: "Extract specific frame by number",
+			icon: Frame,
+			bgColor: "bg-yellow-500/10",
+			textColor: "text-yellow-400",
+			hoverColor: "group-hover:text-yellow-300"
+		},
+		{
+			type: "llmNode",
+			name: "Run Any LLM",
+			description: "Gemini Processing",
+			icon: Bot,
+			bgColor: "bg-[#FEF3C7]/10",
+			textColor: "text-[#FEF3C7]",
+			hoverColor: "group-hover:text-white"
+		}
+	];
+
+	// Filter nodes based on search query
+	const filteredNodes = allNodes.filter(node => 
+		node.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		node.description.toLowerCase().includes(searchQuery.toLowerCase())
+	);
 
 	return (
 		<>
@@ -31,6 +96,8 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						<input
 							type="text"
 							placeholder="Search nodes..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
 							className="w-full bg-[#1a1a1a] text-xs text-white rounded-md pl-9 pr-3 py-2 border border-white/5 focus:outline-none focus:border-white/20 placeholder:text-white/20"
 						/>
 					</div>
@@ -43,123 +110,43 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 
 			{/* Node List (Quick Access) */}
 			<div className="flex-1 overflow-y-auto p-4">
-				{!isCollapsed && <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider mb-4">Quick Access</h3>}
+				{!isCollapsed && <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider mb-4">
+					{searchQuery ? `Results (${filteredNodes.length})` : "Quick Access"}
+				</h3>}
 
-				<div className="space-y-3">
-					{/* 1. TEXT NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "textNode")}>
-						<div className="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:text-blue-300">
-							<Type size={18} />
+				{filteredNodes.length === 0 ? (
+					!isCollapsed && (
+						<div className="text-center py-8 text-white/30 text-xs">
+							No nodes found matching "{searchQuery}"
 						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Text</p>
-								<p className="text-[10px] text-white/40">Input plain text</p>
-							</div>
-						)}
+					)
+				) : (
+					<div className="space-y-3">
+						{filteredNodes.map((node) => {
+							const IconComponent = node.icon;
+							return (
+								<div
+									key={node.type}
+									className={cn(
+										"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
+										isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
+									)}
+									draggable
+									onDragStart={(e) => onDragStart(e, node.type)}>
+									<div className={cn("w-8 h-8 rounded flex items-center justify-center", node.bgColor, node.textColor, node.hoverColor)}>
+										<IconComponent size={18} />
+									</div>
+									{!isCollapsed && (
+										<div>
+											<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">{node.name}</p>
+											<p className="text-[10px] text-white/40">{node.description}</p>
+										</div>
+									)}
+								</div>
+							);
+						})}
 					</div>
-
-					{/* 2. IMAGE NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "imageNode")}>
-						<div className="w-8 h-8 rounded bg-purple-500/10 flex items-center justify-center text-purple-400 group-hover:text-purple-300">
-							<ImageIcon size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Image</p>
-								<p className="text-[10px] text-white/40">Upload images</p>
-							</div>
-						)}
-					</div>
-
-					{/* 3. CROP IMAGE NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "cropImageNode")}>
-						<div className="w-8 h-8 rounded bg-orange-500/10 flex items-center justify-center text-orange-400 group-hover:text-orange-300">
-							<Crop size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Crop Image</p>
-								<p className="text-[10px] text-white/40">Crop Image</p>
-							</div>
-						)}
-					</div>
-
-					{/* 4. VIDEO NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "videoNode")}>
-						<div className="w-8 h-8 rounded bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:text-blue-300">
-							<Video size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Video</p>
-								<p className="text-[10px] text-white/40">Video Input</p>
-							</div>
-						)}
-					</div>
-
-					{/* 5. EXTRACT FRAME NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "extractFrameNode")}>
-						<div className="w-8 h-8 rounded bg-yellow-500/10 flex items-center justify-center text-yellow-400 group-hover:text-yellow-300">
-							<Frame size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Extract Frame</p>
-								<p className="text-[10px] text-white/40">Extract specific frame by number</p>
-							</div>
-						)}
-					</div>
-
-					{/* 6. RUN ANY LLM NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "llmNode")}>
-						<div className="w-8 h-8 rounded bg-[#FEF3C7]/10 flex items-center justify-center text-[#FEF3C7] group-hover:text-white">
-							<Bot size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Run Any LLM</p>
-								<p className="text-[10px] text-white/40">Gemini Processing</p>
-							</div>
-						)}
-					</div>
-				</div>
+				)}
 			</div>
 
 			{/* Bottom Profile/Mock User */}
