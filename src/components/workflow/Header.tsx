@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState, useCallback} from "react";
-import {Save, Loader2, Share2, FolderOpen} from "lucide-react";
+import {Save, Loader2, Share2, FolderOpen, Layers} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {saveWorkflowAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
@@ -89,7 +89,7 @@ export default function Header() {
 			<header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#111]">
 				{/* --- LEFT SIDE (Logo + Name Input) --- */}
 				<div className="flex items-center gap-3">
-					<div className="w-6 h-6 rounded bg-gradient-to-tr from-pink-500 to-purple-500"></div>
+				<Layers size={20} className="text-yellow-100" />
 
 					{/* Editable Workflow Name */}
 					{isEditingName ? (

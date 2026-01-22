@@ -8,9 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --------------------------------------------------------
-// 2. USER (The "Mirror" of Clerk)
-// --------------------------------------------------------
 model User {
   // We use the string ID from Clerk (e.g., "user_2pM...") as the primary key
   id        String   @id 
@@ -28,9 +25,6 @@ model User {
   @@map("users")
 }
 
-// --------------------------------------------------------
-// 3. WORKFLOW (The Definition)
-// --------------------------------------------------------
 model Workflow {
   id          Int      @id @default(autoincrement()) // SERIAL
   name        String   @db.VarChar(255)
@@ -49,10 +43,6 @@ model Workflow {
   @@map("workflows")
 }
 
-// --------------------------------------------------------
-// 4. WORKFLOW RUN (The History - Right Sidebar)
-// --------------------------------------------------------
-// Represents one full execution of the workflow (e.g., "Run #123")
 model WorkflowRun {
   id          String   @id @default(uuid()) // Use UUID for unique run IDs
   
@@ -71,9 +61,6 @@ model WorkflowRun {
   @@map("workflow_runs")
 }
 
-// --------------------------------------------------------
-// 5. NODE EXECUTION (Granular Details)
-// --------------------------------------------------------
 // Tracks what happened in a specific node (e.g., "Crop Image Node failed")
 model NodeExecution {
   id          String   @id @default(uuid())
@@ -91,7 +78,7 @@ model NodeExecution {
   inputData   Json?    @map("input_data")
   outputData  Json?    @map("output_data")
   
-  error       String?  // If failed, why?
+  error       String? 
   
   startedAt   DateTime @default(now()) @map("started_at")
   finishedAt  DateTime? @map("finished_at")
@@ -101,9 +88,6 @@ model NodeExecution {
   @@map("node_executions")
 }
 
-// --------------------------------------------------------
-// 6. VIDEO (CDN Storage Metadata)
-// --------------------------------------------------------
 model Video {
   id          String   @id @default(uuid())
   userId      String   @map("user_id") @db.VarChar(255)

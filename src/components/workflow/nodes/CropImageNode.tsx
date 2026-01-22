@@ -2,10 +2,9 @@
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Crop, Loader2, AlertCircle, MoreHorizontal, Trash2 } from "lucide-react";
+import { Crop, Loader2, AlertCircle, MoreHorizontal, Trash2, Download, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useWorkflowStore } from "@/store/workflowStore";
-import { useReactFlow } from "@xyflow/react";
 
 type CropImageData = {
   label?: string;
@@ -22,10 +21,12 @@ type CropImageData = {
 export default function CropImageNode({ id, data, isConnectable, selected }: NodeProps & { data: CropImageData }) {
   const updateNodeData = useWorkflowStore((state) => state.updateNodeData);
   const deleteNode = useWorkflowStore((state) => state.deleteNode);
-  const { getEdges, getNodes } = useReactFlow();
+  const edges = useWorkflowStore((state) => state.edges);
+  const nodes = useWorkflowStore((state) => state.nodes);
 
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -105,7 +106,7 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
           const uploadResult = await uploadResponse.json();
           const cdnUrl = uploadResult.image.cdnUrl;
           
-          console.log("[CropImageNode] Cropped image uploaded to CDN:", cdnUrl);
+          // console.log("[CropImageNode] Cropped image uploaded to CDN:", cdnUrl);
 
           updateNodeData(id, {
             croppedImage: cdnUrl, // Store CDN URL instead of base64
@@ -139,28 +140,33 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
 
   // Detect incoming image from connected node
   useEffect(() => {
-    const edges = getEdges();
-    const nodes = getNodes();
     const incomingEdge = edges.find((e) => e.target === id && e.targetHandle === "image-input");
 
-      if (incomingEdge) {
-        const sourceNode = nodes.find((n) => n.id === incomingEdge.source);
-        if (sourceNode) {
-          const sourceData = sourceNode.data as Record<string, unknown>;
-          const fileData = sourceData?.file as { url?: string } | undefined;
-          const newImage = (fileData?.url || sourceData?.image || sourceData?.croppedImage || sourceData?.output) as string | undefined;
+    if (incomingEdge) {
+      const sourceNode = nodes.find((n) => n.id === incomingEdge.source);
+      if (sourceNode) {
+        const sourceData = sourceNode.data as Record<string, unknown>;
+        const fileData = sourceData?.file as { url?: string } | undefined;
+        const newImage = (fileData?.url || sourceData?.image || sourceData?.croppedImage || sourceData?.output) as string | undefined;
 
         if (newImage && typeof newImage === "string" && newImage !== originalImage) {
-          console.log("[CropNode] New image detected:", newImage.substring(0, 50) + "...");
+          // console.log("[CropNode] New image detected:", newImage.substring(0, 50) + "...");
           updateNodeData(id, {
             originalImage: newImage,
-            croppedImage: undefined, // Reset previous crop
+            croppedImage: undefined,
             status: "idle",
           });
         }
       }
+    } else if (originalImage) {
+      // Clear the cached image when connection is removed to avoid stale previews
+      updateNodeData(id, {
+        originalImage: undefined,
+        croppedImage: undefined,
+        status: "idle",
+      });
     }
-  }, [getEdges, getNodes, id, updateNodeData, originalImage]); // Dependencies sahi se rakhi
+  }, [edges, nodes, id, updateNodeData, originalImage]);
 
   const handleParameterChange = useCallback(
     (field: "cropX" | "cropY" | "cropWidth" | "cropHeight", value: number) => {
@@ -172,6 +178,25 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
 
   const hasImage = !!originalImage;
   const canCrop = hasImage && !isLoading;
+
+  const handleDownload = useCallback(async () => {
+    if (!croppedImage) return;
+
+    try {
+      const res = await fetch(croppedImage);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `cropped-${Date.now()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("[CropImageNode] Download failed:", err);
+    }
+  }, [croppedImage]);
 
   return (
     <div
@@ -277,25 +302,50 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
         {/* Preview - Auto show after crop */}
         {croppedImage && (
           <div className="space-y-2 mt-4">
-            <div className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">
-              Cropped Result
-            </div>
-            <div className="relative group rounded-lg border border-white/10 bg-[#0a0a0a] overflow-hidden">
-              <img
-                src={croppedImage}
-                alt="Cropped result"
-                className="w-full h-auto max-h-[400px] object-contain rounded-lg"
-                onError={() => {
-                  console.error("[CropImageNode] Image load error:", croppedImage);
-                }}
-                onLoad={() => {
-                  console.log("[CropImageNode] Cropped image loaded successfully");
-                }}
-              />
-              <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-[10px] text-white/80 rounded">
-                {cropWidth}% × {cropHeight}% at ({cropX}%, {cropY}%)
+            <div className="flex items-center justify-between text-[10px] font-semibold text-white/60 uppercase tracking-wider">
+              <span>Cropped Result</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowPreview((prev) => !prev)}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-white/70 transition-colors"
+                  aria-label={showPreview ? "Hide preview" : "Show preview"}
+                >
+                  {showPreview ? <EyeOff size={12} /> : <Eye size={12} />}
+                  <span className="hidden sm:inline">{showPreview ? "Hide" : "Show"}</span>
+                </button>
+                <button
+                  onClick={handleDownload}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-[#dfff4f] text-black hover:bg-[#cfff3f] transition-colors"
+                  aria-label="Download cropped image"
+                >
+                  <Download size={12} />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
               </div>
             </div>
+
+            {showPreview ? (
+              <div className="relative group rounded-lg border border-white/10 bg-[#0a0a0a] overflow-hidden max-h-[300px]">
+                <img
+                  src={croppedImage}
+                  alt="Cropped result"
+                  className="w-full h-full max-h-[300px] object-contain rounded-lg"
+                  onError={() => {
+                    console.error("[CropImageNode] Image load error:", croppedImage);
+                  }}
+                  onLoad={() => {
+                    // console.log("[CropImageNode] Cropped image loaded successfully");
+                  }}
+                />
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-[10px] text-white/80 rounded">
+                  {cropWidth}% × {cropHeight}% at ({cropX}%, {cropY}%)
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full py-6 text-xs text-white/50 border border-white/10 rounded-lg bg-[#0a0a0a]">
+                Preview hidden
+              </div>
+            )}
           </div>
         )}
       </div>

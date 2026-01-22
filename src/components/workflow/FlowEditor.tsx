@@ -22,7 +22,6 @@ import TextNode from "@/components/workflow/nodes/TextNode";
 import ImageNode from "@/components/workflow/nodes/ImageNode";
 import CropImageNode from "@/components/workflow/nodes/CropImageNode";
 import VideoNode from "@/components/workflow/nodes/VideoNode";
-import CropAndExtractFramesNode from "@/components/workflow/nodes/CropAndExtractFramesNode";
 import ExtractFrameNode from "@/components/workflow/nodes/ExtractFrameNode";
 import LLMNode from "@/components/workflow/nodes/LLMNode";
 import { useWorkflowStore } from "@/store/workflowStore";
@@ -35,7 +34,6 @@ const nodeTypes = {
   imageNode: ImageNode,
   cropImageNode: CropImageNode,
   videoNode: VideoNode,
-  cropAndExtractFramesNode: CropAndExtractFramesNode,
   extractFrameNode: ExtractFrameNode,
   llmNode: LLMNode,
 };
@@ -53,7 +51,6 @@ function FlowContent() {
 
   const [isHandMode, setIsHandMode] = useState(false);
 
-  // FIXED: Type-safe isValidConnection (React Flow v12 compatible)
   const isValidConnection = useCallback(
     ({ source, target, sourceHandle, targetHandle }: Connection | Edge): boolean => {
       // Self-loop
@@ -65,7 +62,6 @@ function FlowContent() {
       if (!sourceNode || !targetNode) return false;
 
       // Safe handles (null/undefined ko null treat karo)
-      const sh = sourceHandle ?? null;
       const th = targetHandle ?? null;
 
       // Image handle
@@ -201,7 +197,7 @@ function FlowContent() {
         <MiniMap
           className="bg-[#1a1a1a] border border-white/10 !bottom-4 !right-4"
           maskColor="rgba(0,0,0, 0.7)"
-          nodeColor={() => "#dfff4f"}
+          nodeColor={() => "#fef3c7"}
         />
 
         <Panel position="bottom-center" className="mb-8">

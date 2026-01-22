@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 
     // Extract the frame at the calculated timestamp
     try {
-      console.log('[ExtractFrame] Extracting frame:', { publicId, frameNumber, timestamp, roundedTimestamp, duration });
+      // console.log('[ExtractFrame] Extracting frame:', { publicId, frameNumber, timestamp, roundedTimestamp, duration });
       
       // Use Cloudinary's video transformation to extract frame at specific timestamp
       // Based on extract-frames route pattern: use number for start_offset and format together
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       if (!frameUrl.includes('f_jpg') && !frameUrl.includes('/jpg')) {
         // If format isn't applied, manually add it to the URL
         // Cloudinary URL structure: .../upload/so_X/f_jpg/v1/... or .../upload/so_X,f_jpg/v1/...
-        console.warn('[ExtractFrame] Format not found in URL, fixing manually:', frameUrl);
+        // console.warn('[ExtractFrame] Format not found in URL, fixing manually:', frameUrl);
         
         // Insert f_jpg after start_offset (so_X)
         // Pattern: /upload/so_X/v1/... should become /upload/so_X/f_jpg/v1/...
@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      console.log('[ExtractFrame] Final frame URL:', finalUrl);
-      console.log('[ExtractFrame] Original frame URL:', frameUrl);
+      // console.log('[ExtractFrame] Final frame URL:', finalUrl);
+      // console.log('[ExtractFrame] Original frame URL:', frameUrl);
 
       return NextResponse.json({
         success: true,

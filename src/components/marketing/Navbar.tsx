@@ -57,13 +57,7 @@ export default function Navbar() {
 				<div className="flex items-start gap-4 ml-auto">
 					{/* Navigation Links - Hidden on mobile */}
 					<nav className="flex items-center text-[13px] text-black/70 tracking-wide">
-						{/* Show all items above 840px */}
-						<div className="flex gap-4 max-[840px]:hidden mt-2">
-							{["COLLECTIVE", "ENTERPRISE", "PRICING", "REQUEST A DEMO"].map((item) => (
-								<Link key={item} href="#" className="hover:text-black transition-colors font-medium">
-									{item}
-								</Link>
-							))}
+					<div className="flex gap-4 mt-2">
 							{isLoaded && user ? (
 								<Link href="/workflows" className="hover:text-black transition-colors font-medium">
 									{user.firstName || user.username || user.primaryEmailAddress?.emailAddress?.split("@")[0] || "User"}
@@ -74,21 +68,7 @@ export default function Navbar() {
 								</Link>
 							)}
 						</div>
-						{/* Show only PRICING and SIGN IN at 840px and below */}
-						<div className="hidden gap-4 max-[840px]:flex mt-2">
-							<Link href="#" className="hover:text-black transition-colors font-medium">
-								PRICING
-							</Link>
-							{isLoaded && user ? (
-								<Link href="/workflows" className="hover:text-black transition-colors font-medium">
-									{user.firstName || user.username || user.primaryEmailAddress?.emailAddress?.split("@")[0] || "User"}
-								</Link>
-							) : (
-								<Link href="/sign-in" className="hover:text-black transition-colors font-medium">
-									SIGN IN
-								</Link>
-							)}
-						</div>
+
 					</nav>
 
 					{/* Big "Start Now" Button - Animates Size */}

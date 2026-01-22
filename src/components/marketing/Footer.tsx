@@ -9,8 +9,8 @@ const XIcon = () => (
 
 const Footer = () => {
     const socialLinks = [
-        { icon: Linkedin, href: "https://www.linkedin.com/in/shivamyeshu/" },
-        { icon: XIcon, href: "#", isCustom: true },
+        { icon: Linkedin, href: "https://www.linkedin.com/in/shivam-yeshu/" },
+        { icon: XIcon, href: "https://x.com/Shivam_01Kumar", isCustom: true },
         { icon: Github, href: "https://github.com/shivamyeshu" },
     ];
 

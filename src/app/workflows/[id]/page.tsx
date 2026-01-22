@@ -2,11 +2,12 @@
 
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {Loader2} from "lucide-react";
+import {Loader2, PanelRightClose, PanelRightOpen} from "lucide-react";
 import dynamic from "next/dynamic";
 import Sidebar from "@/components/workflow/Sidebar";
 import SidebarNodeList from "@/components/workflow/SidebarNodeList";
 import Header from "@/components/workflow/Header";
+import RightHistoryList from "@/components/workflow/RightHistoryList";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {loadWorkflowAction} from "@/app/actions/workflowActions";
 import {DEMO_WORKFLOWS} from "@/lib/demoWorkflows";
@@ -22,6 +23,7 @@ export default function EditorPage() {
 	const workflowId = params.id as string;
 
 	const [loading, setLoading] = useState(true);
+	const [historyVisible, setHistoryVisible] = useState(true);
 	const {setWorkflowId} = useWorkflowStore();
 
 	useEffect(() => {
@@ -136,7 +138,23 @@ export default function EditorPage() {
 				{/* 3. Editor Canvas */}
 				<main className="flex-1 relative h-full">
 					<FlowEditor />
+					
+					{/* History Toggle Button */}
+					<button
+						onClick={() => setHistoryVisible(!historyVisible)}
+						className="absolute top-4 right-4 z-10 p-2 rounded-lg bg-[#1a1a1a] border border-white/10 hover:bg-white/5 transition-colors"
+						title={historyVisible ? "Hide history" : "Show history"}
+					>
+						{historyVisible ? <PanelRightClose className="h-5 w-5 text-white/70" /> : <PanelRightOpen className="h-5 w-5 text-white/70" />}
+					</button>
 				</main>
+
+				{/* 4. Workflow History (Right Sidebar) */}
+				{historyVisible && (
+					<aside className="w-[380px] xl:w-[420px] bg-black/80 backdrop-blur border-l border-white/10">
+						<RightHistoryList />
+					</aside>
+				)}
 			</div>
 		</div>
 	);

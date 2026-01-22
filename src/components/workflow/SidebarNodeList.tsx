@@ -3,16 +3,23 @@
 import React from "react";
 import {Search, Type, ImageIcon, Bot, Crop, Video, Film, Frame} from "lucide-react";
 import {cn} from "@/lib/utils";
+import {useUser} from "@clerk/nextjs";
 
 interface SidebarNodeListProps {
 	isCollapsed?: boolean;
 }
 
 const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
+	const {user, isLoaded} = useUser();
+
 	const onDragStart = (event: React.DragEvent, nodeType: string) => {
 		event.dataTransfer.setData("application/reactflow", nodeType);
 		event.dataTransfer.effectAllowed = "move";
 	};
+
+	const displayName = user?.fullName || user?.firstName || "User";
+	const fallbackInitial = displayName?.[0]?.toUpperCase() || "U";
+	const avatarUrl = user?.imageUrl;
 
 	return (
 		<>
@@ -91,7 +98,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						{!isCollapsed && (
 							<div>
 								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Crop Image</p>
-								<p className="text-[10px] text-white/40">Center crop 80%</p>
+								<p className="text-[10px] text-white/40">Crop Image</p>
 							</div>
 						)}
 					</div>
@@ -110,31 +117,12 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						{!isCollapsed && (
 							<div>
 								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Video</p>
-								<p className="text-[10px] text-white/40">Upload to CDN</p>
+								<p className="text-[10px] text-white/40">Video Input</p>
 							</div>
 						)}
 					</div>
 
-					{/* 5. CROP & EXTRACT FRAMES NODE */}
-					<div
-						className={cn(
-							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
-							isCollapsed ? "flex justify-center p-2" : "flex items-center gap-3"
-						)}
-						draggable
-						onDragStart={(e) => onDragStart(e, "cropAndExtractFramesNode")}>
-						<div className="w-8 h-8 rounded bg-green-500/10 flex items-center justify-center text-green-400 group-hover:text-green-300">
-							<Film size={18} />
-						</div>
-						{!isCollapsed && (
-							<div>
-								<p className="text-sm font-medium text-white group-hover:text-[#FEF3C7]">Crop & Extract</p>
-								<p className="text-[10px] text-white/40">Extract frames via Trigger.dev</p>
-							</div>
-						)}
-					</div>
-
-					{/* 6. EXTRACT FRAME NODE */}
+					{/* 5. EXTRACT FRAME NODE */}
 					<div
 						className={cn(
 							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
@@ -153,7 +141,7 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 						)}
 					</div>
 
-					{/* 7. RUN ANY LLM NODE */}
+					{/* 6. RUN ANY LLM NODE */}
 					<div
 						className={cn(
 							"bg-[#1a1a1a] border border-white/5 hover:border-[#FEF3C7]/50 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-colors group",
@@ -177,11 +165,21 @@ const SidebarNodeList = ({isCollapsed}: SidebarNodeListProps) => {
 			{/* Bottom Profile/Mock User */}
 			<div className="p-4 border-t border-white/10">
 				<div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-					<div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 shrink-0" />
+					{avatarUrl ? (
+						<img
+							src={avatarUrl}
+							alt={displayName}
+							className="w-8 h-8 rounded-full object-cover border border-white/10 bg-[#1a1a1a] shrink-0"
+						/>
+					) : (
+						<div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 shrink-0 flex items-center justify-center text-xs font-bold text-white">
+							{fallbackInitial}
+						</div>
+					)}
 					{!isCollapsed && (
 						<div className="overflow-hidden">
-							<p className="text-xs font-bold text-white truncate">Demo User</p>
-							<p className="text-[10px] text-white/40 truncate">Free Plan</p>
+							<p className="text-xs font-bold text-white truncate">{displayName}</p>
+							<p className="text-[10px] text-white/40 truncate">{user?.primaryEmailAddress?.emailAddress || ""}</p>
 						</div>
 					)}
 				</div>

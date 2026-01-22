@@ -148,18 +148,29 @@ export default function DashboardPage() {
                                     href={`/workflows/${demo.id}`}
                                     className="group relative min-w-[200px] h-[140px] rounded-xl overflow-hidden border border-white/10 hover:border-yellow-100/50 transition-all hover:-translate-y-1 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]">
                                     {/* Content */}
-                                    <div className="relative h-full p-4 flex flex-col">
-                                        {/* Thumbnail/Icon */}
-                                        <div className="flex-1 flex items-center justify-center">
-                                            <div className="text-4xl">{demo.thumbnail}</div>
+                                    {demo.thumbnail.startsWith('/') ? (
+                                        <>
+                                            <img 
+                                                src={demo.thumbnail} 
+                                                alt={demo.name}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                            />
+                                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/50 to-transparent">
+                                                <h3 className="text-sm font-semibold text-white truncate">{demo.name}</h3>
+                                                <p className="text-xs text-white/70 truncate mt-0.5">{demo.description}</p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="relative h-full p-4 flex flex-col">
+                                            <div className="flex-1 flex items-center justify-center">
+                                                <div className="text-4xl">{demo.thumbnail}</div>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-white truncate">{demo.name}</h3>
+                                                <p className="text-xs text-white/50 truncate mt-0.5">{demo.description}</p>
+                                            </div>
                                         </div>
-
-                                        {/* Name */}
-                                        <div>
-                                            <h3 className="text-sm font-semibold text-white truncate">{demo.name}</h3>
-                                            <p className="text-xs text-white/50 truncate mt-0.5">{demo.description}</p>
-                                        </div>
-                                    </div>
+                                    )}
 
                                     {/* Arrow on hover */}
                                     <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">

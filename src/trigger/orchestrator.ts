@@ -23,13 +23,13 @@ export const orchestrator = task({
         const graph = run.workflow.data as any;
         const nodes: NodeData[] = graph.nodes;
 
-        console.log(`Starting execution for workflow: ${run.workflow.name}`);
+        // console.log(`Starting execution for workflow: ${run.workflow.name}`);
 
         // Iterate and Execute
         for (const node of nodes) {
             if (node.type !== "llm") continue;
 
-            console.log(`Processing LLM Node: ${node.id}`);
+            // console.log(`Processing LLM Node: ${node.id}`);
 
             // Create "RUNNING" Record
             const executionRecord = await prisma.nodeExecution.create({

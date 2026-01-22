@@ -85,8 +85,8 @@ export const useWorkflowStore = create<WorkflowState>()(
                     // Force the new connection to use our custom type
                     const edge = {
                         ...connection,
-                        type: 'animatedEdge', // Matches the key we will define in FlowEditor
-                        animated: true,       // Adds the "marching ants" animation automatically
+                        type: 'animatedEdge', 
+                        animated: true,       
                         style: { strokeWidth: 3 },
                     };
 

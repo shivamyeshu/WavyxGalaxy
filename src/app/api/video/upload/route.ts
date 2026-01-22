@@ -143,6 +143,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // 🚀 CONSOLE LOG FOR DEMO - CDN URL
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✅ VIDEO UPLOADED TO CLOUDINARY CDN');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('📹 CDN URL:', videoRecord.cdnUrl);
+    console.log('🆔 Video ID:', videoRecord.id);
+    console.log('⏱️  Duration:', videoRecord.duration, 'seconds');
+    console.log('📐 Dimensions:', `${videoRecord.width}x${videoRecord.height}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     return NextResponse.json({
       success: true,
       video: {

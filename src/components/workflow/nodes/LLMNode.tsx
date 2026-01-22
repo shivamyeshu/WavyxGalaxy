@@ -58,6 +58,7 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 	}, [data.outputs]);
 
 	const handleAddImageInput = useCallback(() => {
+		if (imageHandleCount >= 8) return; // Limit to 8 max
 		updateNodeData(id, {imageHandleCount: imageHandleCount + 1});
 	}, [id, imageHandleCount, updateNodeData]);
 
@@ -378,9 +379,15 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 			<div className="px-6 mb-6 pb-3 flex items-center justify-between gap-2">
 				<button
 					onClick={handleAddImageInput}
-					className="flex items-center gap-1.5 text-[11px] text-white/50 hover:text-white/80 transition-colors font-medium">
+					disabled={imageHandleCount >= 10}
+					className={cn(
+						"flex items-center gap-1.5 text-[11px] transition-colors font-medium",
+						imageHandleCount >= 10 
+							? "text-white/20 cursor-not-allowed opacity-50" 
+							: "text-white/50 hover:text-white/80"
+					)}>
 					<Plus size={12} />
-					Add another image input
+					Add another image input {imageHandleCount >= 10 && `(Max 10)`}
 				</button>
 
 				<button

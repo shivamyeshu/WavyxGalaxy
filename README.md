@@ -1,348 +1,544 @@
-# Galaxy.ai × Weavy Workflow Builder
+# Weavy Workflow Builder
 
-> An advanced LLM-powered visual workflow editor inspired by Weavy.ai, built for Galaxy.ai SDE internship challenge. Seamlessly create, execute, and manage AI workflows with a beautiful node-based canvas interface.
+An advanced AI-powered visual workflow editor built with Next.js 15, TypeScript, and modern web technologies. Create, execute, and manage intelligent workflows with an intuitive node-based canvas interface.
 
-**Submission for Galaxy.ai** | Candidate:Shivam | January 18, 2026
 ---
 
-## What is This?
+## Overview
 
-Galaxy Workflow Builder is a modern, production-ready visual workflow editor that lets you:
+Weavy Workflow Builder is a production-ready visual workflow platform that enables users to build sophisticated AI automation pipelines through an intuitive drag-and-drop interface. Built with enterprise-grade technologies, it combines powerful LLM capabilities with seamless data processing and reliable execution.
 
-- **Build workflows visually** using an intuitive drag-and-drop node canvas
-- **Execute LLM-powered workflows** with Google Gemini integration
-- **Process images** with upload, crop, and AI analysis capabilities
-- **Run on Trigger.dev** for reliable, scalable execution
-- **Persist everything** with Prisma + PostgreSQL
-- **Secure authentication** with Clerk
-- **Beautiful dark mode UI** inspired by Weavy's design system
+### Core Capabilities
 
-Perfect for:
-- Building no-code AI automation workflows
-- Image processing pipelines with AI
-- Rapid workflow prototyping
-- Understanding modern web app architecture
+- Visual workflow design with an intuitive node-based canvas
+- AI-powered processing using Google Gemini integration
+- Advanced image manipulation and analysis pipeline
+- Serverless execution with Trigger.dev orchestration
+- Persistent storage with PostgreSQL and Prisma ORM
+- Enterprise authentication via Clerk
+- Professional dark-mode interface with smooth animations
+
+### Use Cases
+
+- No-code AI automation workflows
+- Image processing and analysis pipelines
+- Content generation and data enrichment
+- Rapid workflow prototyping and testing
+- Learning modern full-stack architecture patterns
 
 ---
 
 ## Table of Contents
 
-- [Key Features](#key-features)
-- [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [Demo Workflow](#demo-workflow)
-- [Configuration](#configuration)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [Project Architecture](#project-architecture)
+- [Development Guide](#development-guide)
+- [Deployment](#deployment)
 - [Roadmap](#roadmap)
-- [Architecture Highlights](#architecture-highlights)
-- [About](#about)
+- [Contributing](#contributing)
 
 ---
 
-## Key Features
+## Features
 
-### Canvas & UI
-- Pixel-inspired Weavy design with dark mode, dotted grid, and minimap
-- Smooth pan/zoom interactions on the canvas
-- Real-time visual feedback with pulsating glow effects on running nodes
-- Left sidebar with quick-access node buttons
+### Workflow Canvas
 
-### Workflow Execution
-- 4 fully functional node types:
-  - Image Input: Upload images via Transloadit, get public URLs
-  - Crop Image: Precise image cropping with X%, Y%, Width%, Height% parameters
-  - LLM Node: Execute Google Gemini prompts via Trigger.dev
-  - Text Node: Static text with output connections
+- Professional dark-mode interface with dotted grid background
+- Smooth pan and zoom controls with minimap navigation
+- Real-time visual feedback during workflow execution
+- Intuitive drag-and-drop node placement
+- Context menus for quick node management
+- Undo/redo support for canvas operations
 
-- Sequential workflow execution with real data flow
-- Trigger.dev integration for reliable, serverless execution
-- Node deletion & context menus with loading/error states
+### Node Types
 
-### Data & Persistence
-- Workflow history panel with execution logs (timestamp, status, node details)
-- Prisma ORM with PostgreSQL for reliable persistence
-- Type-safe data flow with Zod validation
-- JSON-based node data storage for flexibility
+**Image Input Node**
+- Direct image upload via Transloadit CDN
+- Generates public URLs for workflow processing
+- Supports multiple image formats
 
-### Authentication & Security
-- Clerk authentication with protected routes
-- User-scoped workflows and executions
+**Crop Image Node**
+- Precise image cropping with percentage-based coordinates
+- Real-time preview of crop region
+- X, Y, Width, and Height parameter controls
+
+**LLM Processing Node**
+- Google Gemini API integration
+- Custom prompt configuration
+- Supports text and image analysis
+- Streaming response support
+
+**Text Node**
+- Static text input for workflows
+- Variable interpolation ready
+- Output connections to downstream nodes
+
+### Execution Engine
+
+- Sequential workflow processing with dependency resolution
+- Real-time execution status updates
+- Comprehensive error handling and logging
+- Serverless execution via Trigger.dev
+- Automatic retry logic for failed operations
+
+### Data Management
+
+- Complete workflow execution history
+- Timestamped logs with node-level details
+- Success/failure status tracking
+- JSON-based flexible data storage
+- Type-safe data flow validation
+
+### Security & Authentication
+
+- OAuth integration via Clerk
+- User-scoped workflow isolation
+- Protected API routes
+- Secure credential management
 
 ---
 
-## Tech Stack
+## Technology Stack
 
-| Category | Technology |
-|----------|-------------|
-| Framework | Next.js 15 (App Router) + TypeScript |
-| UI Framework | Tailwind CSS + shadcn/ui + Lucide React Icons |
-| Canvas | @xyflow/react (React Flow v12) |
-| State | Zustand + Zundo (undo/redo ready) |
-| Auth | Clerk (@clerk/nextjs) |
-| Database | Prisma ORM + PostgreSQL (Neon) |
-| LLM | Google Gemini API (@google/generative-ai) |
-| Execution | Trigger.dev v4 (serverless orchestration) |
-| File Upload | Transloadit (Uppy + @uppy/transloadit) |
-| Validation | Zod |
-| Animations | Framer Motion |
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **React Flow** - Node-based canvas (@xyflow/react)
+- **Framer Motion** - Smooth animations
+- **Lucide React** - Icon library
+
+### State Management
+- **Zustand** - Lightweight state management
+- **Zundo** - Undo/redo functionality
+
+### Backend
+- **Next.js API Routes** - RESTful endpoints
+- **Prisma ORM** - Type-safe database access
+- **PostgreSQL** - Relational database (Neon)
+- **Trigger.dev** - Serverless workflow orchestration
+
+### External Services
+- **Clerk** - Authentication and user management
+- **Google Gemini** - LLM processing
+- **Transloadit** - File upload and processing
+- **Cloudinary** - CDN and media storage
+
+### Development Tools
+- **Zod** - Runtime type validation
+- **ESLint** - Code quality
+- **Prettier** - Code formatting
 
 ---
 
-## Quick Start
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 20+
-- PostgreSQL (free tier: Neon.tech)
-- External accounts:
-  - Clerk — Authentication
-  - Google AI Studio — Gemini API key
-  - Trigger.dev — Workflow orchestration
-  - Transloadit — File uploads
+- Node.js 20 or higher
+- PostgreSQL database (Neon recommended for free tier)
+- Accounts for external services:
+  - Clerk (authentication)
+  - Google AI Studio (Gemini API)
+  - Trigger.dev (workflow execution)
+  - Transloadit (file uploads)
+  - Cloudinary (media storage)
 
 ### Installation
 
 ```bash
-# Clone and install
+# Clone the repository
 git clone https://github.com/shivamyeshu/WavyxGalaxy.git
 cd weavy-clone-main
+
+# Install dependencies
 npm install
 
 # Generate Prisma client
 npx prisma generate
 
-# Set up database
+# Push database schema
 npx prisma db push
 ```
 
-### Environment Setup
+### Environment Configuration
 
-Create `.env.local` in the project root:
+Create a `.env.local` file in the project root:
 
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+# Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
 
-# Google Gemini
-GEMINI_API_KEY=AIzaSy...
+# AI Services
+GEMINI_API_KEY=your_gemini_api_key
 
-# Database (Neon PostgreSQL)
-DATABASE_URL=postgresql://neondb_owner:...@ep-...neon.tech/neondb?sslmode=require
+# Database
+DATABASE_URL=your_postgresql_connection_string
 
-# Transloadit (File Upload)
-TRANSLOADIT_KEY=...
-TRANSLOADIT_SECRET=...
-TRANSLOADIT_TEMPLATE_ID=asm_...
+# File Upload
+TRANSLOADIT_KEY=your_transloadit_key
+TRANSLOADIT_SECRET=your_transloadit_secret
+TRANSLOADIT_TEMPLATE_ID=your_template_id
 
-# Trigger.dev (Execution Engine)
-TRIGGER_SECRET_KEY=tr_dev_...
-TRIGGER_PROJECT_REF=prj_...
+# Workflow Execution
+TRIGGER_SECRET_KEY=your_trigger_secret_key
+TRIGGER_PROJECT_REF=your_trigger_project_ref
 
-# Cloudinary (CDN for Video/Image Storage)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+# Media Storage
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-### Run Development Server
+### Development Server
 
 ```bash
-# Terminal 1: Next.js app
+# Start the Next.js development server
 npm run dev
 
-# Terminal 2: Trigger.dev local execution (optional, for testing)
+# In a separate terminal, start Trigger.dev local development
 npx trigger.dev@latest dev
 
-# Open http://localhost:3000
+# Access the application at http://localhost:3000
 ```
 
 ---
 
-## Project Structure
+## Project Architecture
+
+### Directory Structure
 
 ```
 src/
 ├── app/                          # Next.js App Router
-│   ├── (marketing)/             # Landing pages
-│   ├── workflows/               # Workflow builder pages
-│   ├── sign-in/                 # Clerk auth pages
-│   ├── api/                     # API routes (LLM execution)
-│   └── globals.css              # Global styles
+│   ├── (marketing)/             # Public marketing pages
+│   ├── workflows/               # Protected workflow pages
+│   │   ├── page.tsx            # Workflow list
+│   │   └── [id]/page.tsx       # Workflow editor
+│   ├── sign-in/                # Authentication pages
+│   ├── sign-up/
+│   ├── api/                    # API endpoints
+│   │   ├── image/              # Image processing
+│   │   ├── llm/                # LLM execution
+│   │   ├── video/              # Video processing
+│   │   └── workflows/          # Workflow management
+│   ├── layout.tsx              # Root layout
+│   ├── globals.css             # Global styles
+│   └── not-found.tsx           # 404 page
+│
 ├── components/
-│   ├── workflow/                # Canvas + editor components
-│   │   ├── FlowEditor.tsx       # Main canvas
-│   │   ├── Sidebar.tsx          # Node palette
-│   │   ├── nodes/               # Custom node types (Image, Crop, LLM, Text)
-│   │   └── edges/               # Animated edge renderer
-│   ├── marketing/               # Landing page sections
-│   └── providers/               # Clerk AuthProvider
+│   ├── workflow/               # Canvas components
+│   │   ├── FlowEditor.tsx      # Main canvas component
+│   │   ├── Sidebar.tsx         # Node palette
+│   │   ├── Header.tsx          # Workflow controls
+│   │   ├── nodes/              # Custom node implementations
+│   │   │   ├── ImageNode.tsx
+│   │   │   ├── CropImageNode.tsx
+│   │   │   ├── LLMNode.tsx
+│   │   │   └── TextNode.tsx
+│   │   └── edges/              # Custom edge rendering
+│   │       └── AnimatedEdge.tsx
+│   ├── marketing/              # Landing page components
+│   │   ├── Navbar.tsx
+│   │   ├── HeroSection.tsx
+│   │   ├── EditorSection.tsx
+│   │   └── Footer.tsx
+│   └── providers/              # React context providers
+│       └── AuthProvider.tsx
+│
 ├── lib/
-│   ├── db.ts                    # Prisma client
-│   ├── types.ts                 # TypeScript interfaces
-│   ├── demoWorkflows.ts         # Pre-built workflow templates
-│   └── utils.ts                 # Helpers
+│   ├── db.ts                   # Prisma client instance
+│   ├── prisma.ts               # Prisma singleton
+│   ├── types.ts                # TypeScript type definitions
+│   ├── utils.ts                # Utility functions
+│   └── demoWorkflows.ts        # Pre-built workflow templates
+│
 ├── store/
-│   └── workflowStore.ts         # Zustand workflow state
+│   └── workflowStore.ts        # Zustand state management
+│
 ├── trigger/
-│   ├── workflow-nodes.ts        # Trigger.dev task definitions
-│   └── orchestrator.ts          # Execution orchestration
-└── middleware.ts                # Clerk auth middleware
+│   ├── workflow-nodes.ts       # Trigger.dev task definitions
+│   └── orchestrator.ts         # Workflow execution logic
+│
+└── middleware.ts               # Clerk authentication middleware
 
 prisma/
-├── schema.prisma                # Database schema
-└── migrations/                  # Prisma migrations
+├── schema.prisma               # Database schema
+└── migrations/                 # Database migrations
 ```
+
+### Data Flow Architecture
+
+```
+User Interface (React Flow Canvas)
+        ↓
+Zustand Store (workflowStore.ts)
+        ↓
+API Routes (/api/workflows)
+        ↓
+Prisma ORM
+        ↓
+PostgreSQL Database
+        ↓
+Trigger.dev Orchestration
+        ↓
+External Services (Gemini, Transloadit)
+        ↓
+Response → Update Store → UI Updates
+```
+
+### State Management Pattern
+
+- **Local State**: React hooks for component-level state
+- **Global State**: Zustand for workflow nodes, edges, and execution data
+- **Server State**: Prisma for persistent storage
+- **Async State**: Trigger.dev for background job processing
 
 ---
 
-## Demo Workflow
+## Development Guide
 
-The app includes a pre-built demo workflow:
+### Creating Custom Nodes
 
-**Image → Crop → LLM Analysis Pipeline**
-
-1. Upload Image: Transloadit handles upload, stores public URL
-2. Crop Image: Adjust crop region with X%, Y%, Width%, Height% sliders
-3. Text Prompt: Add your analysis prompt (e.g., "Describe what you see")
-4. Run LLM: Gemini analyzes the cropped image using your prompt
-5. View Results: Output appears in node + execution history panel
-
-To load: Click "Load Demo Workflow" in the workflow editor.
-
----
-
-## Configuration
-
-### Database Migrations
-
-If you modify `prisma/schema.prisma`, run:
-
-```bash
-npx prisma migrate dev --name <migration_name>
-```
-
-### Customizing Nodes
-
-Create new node types in `src/components/workflow/nodes/`:
+1. Create a new node component in `src/components/workflow/nodes/`:
 
 ```typescript
-// NewNode.tsx
 import { Handle, Position } from '@xyflow/react';
 
-export function NewNode({ data }) {
+export function CustomNode({ data, selected }) {
   return (
-    <div className="bg-slate-800 rounded-lg p-4">
-      <div className="text-sm font-semibold">{data.label}</div>
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+    <div className={`bg-slate-800 rounded-lg border-2 p-4 ${
+      selected ? 'border-yellow-100' : 'border-gray-700'
+    }`}>
+      <div className="text-sm font-semibold text-white mb-2">
+        {data.label}
+      </div>
+      
+      {/* Input handle */}
+      <Handle 
+        type="target" 
+        position={Position.Top}
+        className="w-3 h-3 bg-yellow-100"
+      />
+      
+      {/* Your node content */}
+      <div className="text-gray-300">
+        {/* Add inputs, outputs, controls here */}
+      </div>
+      
+      {/* Output handle */}
+      <Handle 
+        type="source" 
+        position={Position.Bottom}
+        className="w-3 h-3 bg-yellow-100"
+      />
     </div>
   );
 }
 ```
 
-### Trigger.dev Tasks
+2. Register the node type in `FlowEditor.tsx`:
+
+```typescript
+const nodeTypes = {
+  imageNode: ImageNode,
+  cropImage: CropImageNode,
+  llm: LLMNode,
+  textNode: TextNode,
+  customNode: CustomNode, // Add your node here
+};
+```
+
+### Adding Trigger.dev Tasks
 
 Define new tasks in `src/trigger/workflow-nodes.ts`:
 
 ```typescript
-export const myCustomTask = task({
-  id: "my-custom-task",
-  run: async (payload) => {
-    // Your logic here
-    return result;
+export const customTask = task({
+  id: "custom-task",
+  run: async (payload: { input: string }) => {
+    // Your processing logic
+    const result = await processData(payload.input);
+    
+    return {
+      success: true,
+      output: result,
+    };
   },
 });
 ```
+
+### Database Schema Changes
+
+After modifying `prisma/schema.prisma`:
+
+```bash
+# Create a new migration
+npx prisma migrate dev --name description_of_changes
+
+# Regenerate Prisma client
+npx prisma generate
+
+# Apply migration to production
+npx prisma migrate deploy
+```
+
+### Testing Workflows
+
+1. Start development servers
+2. Navigate to `/workflows`
+3. Create a new workflow
+4. Add nodes from the sidebar
+5. Connect nodes by dragging from output to input handles
+6. Configure node parameters
+7. Click "Run Workflow" to execute
+8. View results in the execution history panel
+
+---
+
+## Deployment
+
+### Build for Production
+
+```bash
+# Create optimized production build
+npm run build
+
+# Test production build locally
+npm start
+```
+
+### Deployment Platforms
+
+**Vercel (Recommended)**
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+**Docker**
+```bash
+# Build image
+docker build -t weavy-workflow .
+
+# Run container
+docker run -p 3000:3000 weavy-workflow
+```
+
+### Environment Variables
+
+Ensure all production environment variables are configured in your deployment platform:
+
+- Authentication keys (Clerk)
+- API keys (Gemini, Transloadit, Cloudinary)
+- Database connection string
+- Trigger.dev configuration
 
 ---
 
 ## Roadmap
 
-### Phase 2 (Planned)
-- Video Processing — Upload video, extract frames with FFmpeg
-- Parallel Execution — Run multiple branches simultaneously
-- Convergence Nodes — Merge parallel workflows at final LLM node
-- Workflow Import/Export — Save as JSON, share with teammates
-- DAG Cycle Detection — Prevent invalid workflow connections
-- Full Undo/Redo — Complete history management via Zundo
-- Advanced Node Types — Database queries, webhooks, SMS/Email
-- Monitoring Dashboard — Execution analytics & performance metrics
-- Multi-user Collaboration — Real-time editing with WebSockets
-- Pixel-Perfect Styling — Exact Weavy.ai UI replication
+### Planned Features
 
----
+**Phase 1 - Enhanced Nodes**
+- Video processing with frame extraction
+- Database query nodes
+- HTTP request nodes
+- File system operations
+- Email and SMS notifications
 
-## Architecture Highlights
+**Phase 2 - Execution Improvements**
+- Parallel execution branches
+- Conditional logic nodes
+- Loop and iteration support
+- Error handling and retry strategies
+- Workflow debugging tools
 
-### State Management
-- Zustand for workflow state (nodes, edges, executions)
-- Zundo integration ready for undo/redo functionality
-- React Context for Clerk authentication
+**Phase 3 - Collaboration**
+- Real-time multi-user editing
+- Workflow versioning
+- Commenting and annotations
+- Team workspaces
+- Workflow templates library
 
-### Data Flow
-```
-User Action → Zustand Store → Update Canvas → Serialize → Prisma → PostgreSQL
-                    ↓
-              Trigger.dev Job → Google Gemini → Result → Update History
-```
-
-### Type Safety
-- TypeScript for compile-time safety
-- Zod for runtime validation of workflow/node data
-- Prisma types generated from schema
-
-### Performance
-- Next.js Image Optimization for uploaded images
-- React Flow memoization to prevent unnecessary node re-renders
-- Trigger.dev async execution keeps UI responsive
-
----
-
-## What This Demonstrates
-
-- Full-stack modern web development with Next.js 15, TypeScript, and Zustand
-- External service integrations with Clerk, Google Gemini, Trigger.dev, and Transloadit
-- Complex UI patterns with React Flow, animations, and responsive design
-- Production-ready code with error handling, validation, persistence, and security
+**Phase 4 - Enterprise Features**
+- Role-based access control
+- Audit logging
+- Performance monitoring
+- Custom integrations API
+- Workflow analytics dashboard
 
 ---
 
 ## Contributing
 
-Found a bug or want to improve this? Fork the repo and submit a PR.
+Contributions are welcome! Here's how to get started:
 
-Areas that need help:
-- Video processing branch implementation
-- Parallel execution + convergence
-- Pixel-perfect UI refinements
-- Unit/integration tests
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Areas for Contribution
+
+- Additional node types
+- UI/UX improvements
+- Performance optimizations
+- Documentation enhancements
+- Bug fixes and testing
+
+### Code Style
+
+- Follow TypeScript best practices
+- Use Tailwind CSS for styling
+- Write meaningful commit messages
+- Add comments for complex logic
+- Update documentation for new features
 
 ---
 
 ## License
 
-This project is open for educational and portfolio purposes. Credit Galaxy.ai and Weavy.ai for inspiration.
+This project is open source and available for educational and portfolio purposes.
 
 ---
 
-## About
+## Acknowledgments
 
-**Shivam** | Delhi, India
+- Weavy.ai for design inspiration
+- Next.js team for the amazing framework
+- React Flow for the canvas library
+- All open-source contributors
 
-- GitHub: https://github.com/shivamyeshu
-- LinkedIn: https://www.linkedin.com/in/shivam-yeshu
-- Contact via GitHub
+---
 
-Built for the Galaxy.ai SDE internship challenge.
+## Contact
 
-Deadline: January 22, 2026 EOD
+**Developer**: Shivam Yeshu  
+**Location**: Delhi, India  
+**GitHub**: [github.com/shivamyeshu](https://github.com/shivamyeshu)  
+**LinkedIn**: [linkedin.com/in/shivam-yeshu](https://www.linkedin.com/in/shivam-yeshu)
+
+For questions, issues, or feature requests, please open an issue on GitHub.
 
 ---
 
 ## Support
 
-Have questions?
-- Check the Issues tab
-- Open a discussion for architecture questions
-- Review the inline code comments (especially in `src/trigger/` and `src/store/`)
+Need help?
+
+- Check existing [GitHub Issues](https://github.com/shivamyeshu/WavyxGalaxy/issues)
+- Review inline code documentation
+- Explore the `/docs` directory
+- Join discussions in the repository
+
+---
+
+**Built with precision and passion for modern web development.**

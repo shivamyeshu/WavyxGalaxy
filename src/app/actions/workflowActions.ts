@@ -44,7 +44,7 @@ export async function saveWorkflowAction({ id, name, nodes, edges }: SaveWorkflo
 
         if (id) {
             // UPDATE Existing
-            console.log(`Updating Workflow ID: ${id}`);
+            // console.log(`Updating Workflow ID: ${id}`);
 
             const numericId = typeof id === "string" ? parseInt(id) : id;
             if (!numericId) return { success: false, error: "Invalid Workflow ID" };
