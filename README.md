@@ -41,6 +41,36 @@ Weavy Workflow Builder is a production-ready visual workflow platform that enabl
 
 ---
 
+## Demo
+
+This document provides a visual walkthrough of the WavyxGalaxy application, showcasing its main features and user interface.
+
+### Main Interface
+The main landing page of the application.
+![Main Interface](public/readme/main.png)
+
+### Workflow Space
+The dedicated space where users can manage and create their workflows.
+![Workflow Space](public/readme/workflowspace.png)
+
+### Workflow Canvas
+The interactive canvas for building and editing workflows using a node-based system.
+![Workflow Canvas](public/readme/flow.png)
+
+### Demo with History
+An example of a workflow execution, showing the history of the run.
+![Demo with History](public/readme/demowithhistory.png)
+
+### Customize and Delete
+Options for customizing and deleting workflow nodes or elements.
+![Customize and Delete](public/readme/customize&delete.png)
+
+### Share Workflow
+The feature to share a created workflow with others.
+![Share Workflow](public/readme/shareworkflow.png)
+
+---
+
 ## Features
 
 ### Workflow Canvas
@@ -506,7 +536,7 @@ Contributions are welcome! Here's how to get started:
 
 ## License
 
-This project is open source and available for educational and portfolio purposes.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -541,4 +571,3 @@ Need help?
 
 ---
 
-**Built with precision and passion for modern web development.**

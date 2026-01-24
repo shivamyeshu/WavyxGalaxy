@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       // Build the direct Cloudinary URL with all transformations in the correct order
       const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
       const directFrameUrl = `https://res.cloudinary.com/${cloudName}/video/upload/so_${roundedTimestamp},f_jpg,q_auto/${publicId}.jpg`;
-      
+       
       console.log('[ExtractFrame] Direct URL:', directFrameUrl);
       console.log('[ExtractFrame] URL contains so_: ', directFrameUrl.includes(`so_${roundedTimestamp}`));
       console.log('[ExtractFrame] URL contains f_jpg: ', directFrameUrl.includes('f_jpg'));

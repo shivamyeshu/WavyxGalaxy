@@ -44,7 +44,7 @@ const MarketingCardNode = ({ data }: { data: HeroNodeData }) => {
 						<p className="text-[11px] leading-relaxed text-foreground/80">{data.text}</p>
 					</div>
 				) : (
-					<div className={`w-full h-full ${data.gradientClass || "bg-gradient-to-r from-blue-900 via-purple-800 to-orange-300"}`} />
+					<div className={`w-full h-full ${data.gradientClass || "bg-gradient-to-r accent-black"}`} />
 				)}
 			</div>
 

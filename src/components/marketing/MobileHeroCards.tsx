@@ -1,12 +1,5 @@
 const cards = [
 	{
-		id: "color",
-		type: "Color Reference",
-		label: "",
-		gradient: "bg-gradient-to-r from-blue-900 via-purple-800 to-orange-300",
-		size: "small",
-	},
-	{
 		id: "3d",
 		type: "3D",
 		label: "Rodin 2.0",
@@ -29,8 +22,8 @@ const cards = [
 	},
 	{
 		id: "minimax",
-		type: "Video",
-		label: "Minimax Video",
+		type: "Image",
+		label: "Minimax Image",
 		image: "https://cdn.prod.website-files.com/681b040781d5b5e278a69989/6825887e82ac8a8bb8139ebd_GPT%20img%201.avif",
 		size: "large",
 	},
@@ -52,43 +45,36 @@ export default function MobileHeroCards() {
 
 				{/* Cards grid - alternating layout */}
 				<div className="relative space-y-4 px-4">
-					{/* Row 1: Color Reference (left small) */}
-					<div className="flex justify-start">
-						<div className="w-[45%]">
+					{/* Row 1: 3D Rodin (right medium) */}
+					<div className="flex justify-end">
+						<div className="w-[55%]">
 							<CardItem card={cards[0]} />
 						</div>
 					</div>
 
-					{/* Row 2: 3D Rodin (right medium) */}
-					<div className="flex justify-end">
-						<div className="w-[55%]">
+					{/* Connection line visual */}
+					<svg className="absolute top-[10%] left-[40%] w-20 h-24 overflow-visible" aria-hidden="true">
+						<path d="M 0 0 Q 40 30, 60 60" fill="none" stroke="hsl(0 0% 0% / 0.15)" strokeWidth="1.5" />
+					</svg>
+
+					{/* Row 2: Stable Diffusion (left large) */}
+					<div className="flex justify-start">
+						<div className="w-[70%]">
 							<CardItem card={cards[1]} />
 						</div>
 					</div>
 
-					{/* Connection line visual */}
-					<svg className="absolute top-[15%] left-[40%] w-20 h-24 overflow-visible" aria-hidden="true">
-						<path d="M 0 0 Q 40 30, 60 60" fill="none" stroke="hsl(0 0% 0% / 0.15)" strokeWidth="1.5" />
-					</svg>
-
-					{/* Row 3: Stable Diffusion (left large) */}
-					<div className="flex justify-start">
-						<div className="w-[70%]">
+					{/* Row 3: Flux Pro (right medium) */}
+					<div className="flex justify-end">
+						<div className="w-[55%]">
 							<CardItem card={cards[2]} />
 						</div>
 					</div>
 
-					{/* Row 4: Flux Pro (right medium) */}
-					<div className="flex justify-end">
-						<div className="w-[55%]">
-							<CardItem card={cards[3]} />
-						</div>
-					</div>
-
-					{/* Row 5: Minimax Video (left large) */}
+					{/* Row 4: Minimax Image (left large) */}
 					<div className="flex justify-start">
 						<div className="w-[75%]">
-							<CardItem card={cards[4]} />
+							<CardItem card={cards[3]} />
 						</div>
 					</div>
 				</div>
