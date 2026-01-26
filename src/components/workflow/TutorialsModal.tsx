@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { X, BookOpen, Clock } from "lucide-react";
 
 interface Tutorial {
-  id: string;
+  id: number;
   title: string;
   shortTitle?: string;
   description: string;
