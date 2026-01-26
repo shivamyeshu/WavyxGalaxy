@@ -172,15 +172,15 @@ export default function ApiKeyModal({ isOpen, onClose }: ApiKeyModalProps) {
                 Your API key is stored securely and never shared.
               </p>
               
-              {/* Google Cloud Console Link */}
+              {/* Google AI Studio Link */}
               <a
-                href="https://console.cloud.google.com/apis/credentials"
+                href="https://aistudio.google.com/app/api-keys"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors mt-2"
               >
                 <ExternalLink size={12} />
-                Get API Key from Google Cloud Console
+                Get API Key from Google AI Studio
               </a>
             </div>
 

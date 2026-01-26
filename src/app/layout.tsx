@@ -18,10 +18,10 @@ const geistMono = Geist_Mono({
 // Removed invalid GeistSans import and usage
 
 export const metadata: Metadata = {
-	title: "Wavy ai | AI-Powered Workflow Builder",
+	title: "Weavy ai | AI-Powered Workflow Builder",
 	description: "Turn your creative vision into scalable LLM workflows. Access Gemini and other AI models in one node-based platform.",
 	openGraph: {
-	  title: "Wavy ai | Artistic Intelligence for AI Workflows",
+	  title: "Weavy ai | Artistic Intelligence for AI Workflows",
 	  description: "Build powerful, scalable workflows with Google Gemini integration, Trigger.dev executions, and professional node-based editing.",
 	  images: [
 		{

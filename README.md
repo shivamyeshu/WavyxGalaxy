@@ -43,7 +43,7 @@ Weavy Workflow Builder is a production-ready visual workflow platform that enabl
 
 ## Demo
 
-This document provides a visual walkthrough of the WavyxGalaxy application, showcasing its main features and user interface.
+This document provides a visual walkthrough of the WeavyxGalaxy application, showcasing its main features and user interface.
 
 ### Main Interface
 The main landing page of the application.
@@ -180,7 +180,7 @@ The feature to share a created workflow with others.
 
 ```bash
 # Clone the repository
-git clone https://github.com/shivamyeshu/WavyxGalaxy.git
+git clone https://github.com/shivamyeshu/WeavyxGalaxy.git
 cd weavy-clone-main
 
 # Install dependencies
@@ -564,7 +564,7 @@ For questions, issues, or feature requests, please open an issue on GitHub.
 
 Need help?
 
-- Check existing [GitHub Issues](https://github.com/shivamyeshu/WavyxGalaxy/issues)
+- Check existing [GitHub Issues](https://github.com/shivamyeshu/WeavyxGalaxy/issues)
 - Review inline code documentation
 - Explore the `/docs` directory
 - Join discussions in the repository
