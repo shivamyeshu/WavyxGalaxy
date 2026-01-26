@@ -9,6 +9,7 @@ import {getAllWorkflowsAction, deleteWorkflowAction, saveWorkflowAction} from "@
 import {DEMO_WORKFLOWS} from "@/lib/demoWorkflows";
 import Sidebar from "@/components/workflow/Sidebar";
 import SidebarNavigation from "@/components/workflow/SidebarNavigation";
+import TutorialsModal from "@/components/workflow/TutorialsModal";
 import type {Workflow} from "@/lib/types";
 import {useUser} from "@clerk/nextjs";
 
@@ -19,6 +20,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [tutorialsOpen, setTutorialsOpen] = useState(false);
 
     useEffect(() => {
         const fetchWorkflows = async () => {
@@ -146,7 +148,7 @@ export default function DashboardPage() {
                                 <h2 className="text-sm font-semibold text-white/90 px-3 py-1 bg-white/5 rounded-full">
                                     {searchQuery ? "Matching Templates" : "Workflow library"}
                                 </h2>
-                                {!searchQuery && <span className="text-sm text-white/40 hover:text-white cursor-pointer transition-colors">Tutorials</span>}
+                                {!searchQuery && <button onClick={() => setTutorialsOpen(true)} className="text-sm text-white/40 hover:text-yellow-300 cursor-pointer transition-colors font-medium">Tutorials</button>}
                             </div>
 
                             <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
@@ -264,6 +266,9 @@ export default function DashboardPage() {
                     </section>
                 </div>
             </main>
+
+            {/* Tutorials Modal */}
+            <TutorialsModal isOpen={tutorialsOpen} onClose={() => setTutorialsOpen(false)} />
         </div>
     );
 }
