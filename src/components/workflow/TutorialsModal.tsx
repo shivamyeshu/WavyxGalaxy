@@ -203,6 +203,57 @@ const TUTORIALS: Tutorial[] = [
       "Or select the text and use Ctrl+C",
       "Paste the text anywhere using Ctrl+V"
     ]
+  },
+  {
+    id: 13,
+    title: "How to Publish Workflows",
+    description: "Share your workflows publicly with shareable links.",
+    duration: "7 min read",
+    difficulty: "Beginner",
+    category: "Sharing",
+    steps: [
+      "Complete and save your workflow",
+      "Click the PUBLISH button (megaphone icon) in the header",
+      "Sign in if you haven't already",
+      "First time: Success modal appears with shareable link",
+      "Already published: Choose 'Update Existing' or 'Publish as New'",
+      "Link is automatically copied to clipboard",
+      "Share the link via email, social media, or messaging",
+      "Anyone can view your workflow without login"
+    ]
+  },
+  {
+    id: 14,
+    title: "Managing Published Workflows",
+    description: "View, copy, and delete your published workflows.",
+    duration: "5 min read",
+    difficulty: "Beginner",
+    category: "Sharing",
+    steps: [
+      "Click 'My publishes' in the left sidebar",
+      "See all your published workflows with timestamps",
+      "Click Copy button to get the shareable link",
+      "Click Delete button (trash icon) to remove a publish",
+      "Deleted links stop working immediately",
+      "Manage multiple versions of your workflows"
+    ]
+  },
+  {
+    id: 15,
+    title: "How to Use Shared Workflows",
+    description: "Access and duplicate workflows shared by others.",
+    duration: "5 min read",
+    difficulty: "Beginner",
+    category: "Sharing",
+    steps: [
+      "Click on a shared workflow link (no login required)",
+      "Explore nodes and connections in read-only mode",
+      "Use zoom controls (bottom-left) and minimap (bottom-right)",
+      "Click 'Use this workflow' button to create your copy",
+      "Sign in if prompted",
+      "A duplicate is created in your workspace",
+      "Edit and customize the workflow as your own"
+    ]
   }
 ];
 

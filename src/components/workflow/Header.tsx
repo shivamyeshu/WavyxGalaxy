@@ -1,11 +1,12 @@
 "use client";
 
 import React, {useState, useCallback, useEffect, useRef} from "react";
-import {Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock} from "lucide-react";
+import {Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock, Megaphone} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
-import {saveWorkflowAction} from "@/app/actions/workflowActions";
+import {publishWorkflowAction, saveWorkflowAction, checkWorkflowPublishedAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
 import ApiKeyModal from "./ApiKeyModal";
+import PublishSuccessModal from "./PublishSuccessModal";
 import toast from "react-hot-toast";
 import {useAuth} from "@clerk/nextjs";
 import type {LLMNodeData, TextNodeData, ImageNodeData} from "@/lib/types";
@@ -15,8 +16,13 @@ export default function Header() {
 	const {nodes, edges, workflowId, workflowName, setWorkflowId, setWorkflowName, updateNodeData} = useWorkflowStore();
 	const [isSaving, setIsSaving] = useState(false);
 	const [isRunning, setIsRunning] = useState(false);
+	const [isPublishing, setIsPublishing] = useState(false);
 	const [isLoadOpen, setIsLoadOpen] = useState(false);
 	const [isApiKeyOpen, setIsApiKeyOpen] = useState(false);
+	const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+	const [publishedUrl, setPublishedUrl] = useState("");
+	const [existingPublishUrl, setExistingPublishUrl] = useState<string | null>(null);
+	const [showPublishChoice, setShowPublishChoice] = useState(false);
 	const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving">("idle");
 	const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const {userId} = useAuth();
@@ -90,6 +96,85 @@ export default function Header() {
 			console.error(error);
 		} finally {
 			setIsSaving(false);
+		}
+	};
+
+	const handlePublish = useCallback(async () => {
+		if (nodes.length === 0) {
+			toast.error("Canvas is empty!");
+			return;
+		}
+
+		if (!userId) {
+			toast.error("Sign in to publish your workflow");
+			return;
+		}
+
+		setIsPublishing(true);
+		try {
+			// First save the workflow
+			const saveResult = await saveWorkflowAction({
+				id: workflowId,
+				name: workflowName,
+				nodes,
+				edges,
+			});
+
+			const persistedId = saveResult.success && saveResult.id ? saveResult.id : workflowId;
+			if (!persistedId) {
+				toast.error("Save the workflow before publishing.");
+				return;
+			}
+			setWorkflowId(persistedId);
+
+			// Check if already published
+			const checkResult = await checkWorkflowPublishedAction(persistedId);
+			if (checkResult.success && checkResult.isPublished && checkResult.shareUrl) {
+				// Already published - show choice
+				setExistingPublishUrl(checkResult.shareUrl);
+				setShowPublishChoice(true);
+				setIsPublishing(false);
+				return;
+			}
+
+			// Not published yet - publish directly
+			await performPublish(persistedId, false);
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to publish workflow");
+			setIsPublishing(false);
+		}
+	}, [nodes, edges, workflowId, workflowName, userId, setWorkflowId]);
+
+	const performPublish = async (workflowIdToPublish: string, forceNew: boolean) => {
+		setIsPublishing(true);
+		setShowPublishChoice(false);
+		try {
+			const publishResult = await publishWorkflowAction({
+				id: workflowIdToPublish,
+				name: workflowName,
+				nodes,
+				edges,
+				forceNew,
+			});
+
+			if (publishResult.success && publishResult.url) {
+				setPublishedUrl(publishResult.url);
+				setIsPublishModalOpen(true);
+				// Try to copy but don't show error if it fails
+				try {
+					await navigator.clipboard.writeText(publishResult.url);
+				} catch {
+					// Silent fail - user can copy from modal
+				}
+			} else if (publishResult.error) {
+				toast.error(publishResult.error);
+			}
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to publish workflow");
+		} finally {
+			setIsPublishing(false);
 		}
 	};
 
@@ -393,6 +478,15 @@ export default function Header() {
 						SHARE
 					</button>
 
+					{/* Publish Button */}
+					<button
+						onClick={handlePublish}
+						disabled={isPublishing}
+						className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-yellow-100/30 text-yellow-100 text-xs font-bold rounded-lg hover:bg-yellow-100 hover:text-black transition-all disabled:opacity-50">
+						{isPublishing ? <Loader2 size={14} className="animate-spin" /> : <Megaphone size={14} />}
+						{isPublishing ? "PUBLISHING" : "PUBLISH"}
+					</button>
+
 					{/* Run Workflow Button */}
 					<button
 						onClick={handleRunWorkflow}
@@ -415,6 +509,55 @@ export default function Header() {
 
 			<LoadWorkflowModal isOpen={isLoadOpen} onClose={() => setIsLoadOpen(false)} />
 			<ApiKeyModal isOpen={isApiKeyOpen} onClose={() => setIsApiKeyOpen(false)} />
+			
+			{/* Publish Choice Modal - Update or Create New */}
+			{showPublishChoice && existingPublishUrl && (
+				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+					<div className="relative w-full max-w-lg mx-4 bg-[#1a1a1a] border-2 border-yellow-100/30 rounded-2xl shadow-2xl p-6">
+						<h3 className="text-xl font-bold text-white mb-2">Already Published</h3>
+						<p className="text-sm text-white/70 mb-6">This workflow is already published. What would you like to do?</p>
+						
+						<div className="space-y-3">
+							<button
+								onClick={() => performPublish(workflowId!, false)}
+								disabled={isPublishing}
+								className="w-full px-5 py-3 rounded-lg bg-yellow-100 hover:bg-white text-black font-semibold transition-all text-left disabled:opacity-60">
+								<div className="font-bold mb-1">Update Existing</div>
+								<div className="text-xs text-black/70">Keep the same link, update the workflow content</div>
+							</button>
+							
+							<button
+								onClick={() => performPublish(workflowId!, true)}
+								disabled={isPublishing}
+								className="w-full px-5 py-3 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold transition-all text-left disabled:opacity-60">
+								<div className="font-bold mb-1">Publish as New</div>
+								<div className="text-xs text-white/60">Create a new shareable link</div>
+							</button>
+
+							<button
+								onClick={() => {
+									setShowPublishChoice(false);
+									setIsPublishing(false);
+								}}
+								className="w-full px-5 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 text-sm transition-all">
+								Cancel
+							</button>
+						</div>
+
+						<div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+							<p className="text-xs text-blue-300 font-medium mb-1">Current published link:</p>
+							<p className="text-xs text-white/60 font-mono break-all">{existingPublishUrl}</p>
+						</div>
+					</div>
+				</div>
+			)}
+			
+			<PublishSuccessModal 
+				isOpen={isPublishModalOpen} 
+				onClose={() => setIsPublishModalOpen(false)} 
+				shareUrl={publishedUrl}
+				workflowName={workflowName}
+			/>
 		</>
 	);
 }

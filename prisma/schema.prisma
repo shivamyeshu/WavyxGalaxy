@@ -21,6 +21,7 @@ model User {
   // Relations
   workflows Workflow[]
   videos    Video[]
+  published PublishedWorkflow[]
   apiKey    UserAPIKey?
 
   @@map("users")
@@ -49,12 +50,32 @@ model Workflow {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   runs        WorkflowRun[]
+  published   PublishedWorkflow[]
 
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
   @@index([userId])
   @@map("workflows")
+}
+
+model PublishedWorkflow {
+  id         String   @id @default(uuid())
+  workflowId Int      @map("workflow_id")
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  userId     String   @map("user_id") @db.VarChar(255)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name       String   @db.VarChar(255)
+  data       Json
+  shareId    String   @unique @map("share_id")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("published_workflows")
 }
 
 model WorkflowRun {

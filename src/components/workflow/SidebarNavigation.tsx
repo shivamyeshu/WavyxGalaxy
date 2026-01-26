@@ -59,12 +59,12 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 							<AppWindow size={16} />
 							Apps
 						</Link>
-						<button
-							disabled
-							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/20 cursor-not-allowed text-sm">
+						<Link
+							href="/my-publishes"
+							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors">
 							<Users size={16} />
-							Shared with me
-						</button>
+							My publishes
+						</Link>
 						<Link
 							href="/settings"
 							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors mt-2 border-t border-white/10 pt-4">
@@ -80,11 +80,11 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 						<Link href="/apps" className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
 							<AppWindow size={18} />
 						</Link>
-						<button
-							disabled
-							className="flex justify-center p-2 rounded-lg text-white/20 cursor-not-allowed">
+						<Link
+							href="/my-publishes"
+							className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
 							<Users size={18} />
-						</button>
+						</Link>
 						<Link
 							href="/settings"
 							className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors border-t border-white/10 mt-2 pt-2">

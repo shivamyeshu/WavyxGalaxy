@@ -150,6 +150,16 @@ export interface Workflow {
     updated_at: string;
 }
 
+export interface PublishedWorkflowSummary {
+    id: string;
+    workflowId: number;
+    name: string;
+    shareId: string;
+    shareUrl: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface CanvasControlsProps {
     isHandMode: boolean;
     toggleMode: (isHand: boolean) => void;
