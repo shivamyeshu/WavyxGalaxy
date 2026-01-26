@@ -21,8 +21,22 @@ model User {
   // Relations
   workflows Workflow[]
   videos    Video[]
+  apiKey    UserAPIKey?
 
   @@map("users")
+}
+
+model UserAPIKey {
+  id          String   @id @default(uuid())
+  userId      String   @unique @map("user_id") @db.VarChar(255)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  geminiApiKey String   @map("gemini_api_key") @db.Text
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_api_keys")
 }
 
 model Workflow {

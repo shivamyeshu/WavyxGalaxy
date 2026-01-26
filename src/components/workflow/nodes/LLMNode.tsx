@@ -276,11 +276,16 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 
 	return (
 		<div
+			data-node-id={id}
 			className={cn(
-				"rounded-xl border bg-[#1a1a1a] w-[320px] max-w-[400px] shadow-2xl transition-all duration-200 flex flex-col max-h-[600px]",
+				"rounded-xl border bg-[#1a1a1a] w-[320px] max-w-[400px] shadow-2xl transition-all duration-200 flex flex-col",
 				selected ? "border-[#dfff4f] ring-1 ring-[#dfff4f]/50" : "border-white/10 hover:border-white/30",
 				data.status === "error" && "border-red-500 ring-1 ring-red-500/50"
-			)}>
+			)}
+			style={{
+				minHeight: `${Math.max(360, 200 + Math.min(imageHandleCount, 5) * 35)}px`,
+				maxHeight: '580px'
+			}}>
 			{/* Header */}
 			<div className="flex items-center justify-between px-3 py-2.5 border-b border-white/5 bg-[#111] rounded-t-xl">
 				<div className="flex items-center gap-2">
@@ -392,8 +397,8 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 
 				<button
 					onClick={handleRun}
-					disabled={data.status === "loading"}
-					className={cn(
+					disabled={data.status === "loading"}				data-run-button
+				data-node-id={id}					className={cn(
 						"flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-all",
 						data.status === "loading" ? "bg-white/5 text-white/30 cursor-not-allowed" : "bg-white/90 text-black hover:bg-white active:scale-95"
 					)}>
@@ -411,7 +416,7 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 			</div>
 
 			{/* System Prompt Handle */}
-			<div className="absolute left-0" style={{top: "30%"}}>
+			<div className="absolute left-0" style={{top: "80px"}}>
 				<Handle
 					type="target"
 					position={Position.Left}
@@ -429,7 +434,7 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 			</div>
 
 			{/* Prompt Handle */}
-			<div className="absolute left-0" style={{top: "45%"}}>
+			<div className="absolute left-0" style={{top: "115px"}}>
 				<Handle
 					type="target"
 					position={Position.Left}
@@ -448,9 +453,9 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 
 			{/* Dynamic Image Handles */}
 			{Array.from({length: imageHandleCount}).map((_, index) => {
-				const topPosition = 60 + index * 10; // Start at 60%, increment by 10%
+				const topPosition = 150 + index * 35; // Start at 150px, increment by 35px for better spacing
 				return (
-					<div key={`image-${index}`} className="absolute left-0 flex items-center" style={{top: `${topPosition}%`}}>
+					<div key={`image-${index}`} className="absolute left-0 flex items-center" style={{top: `${topPosition}px`}}>
 						<Handle
 							type="target"
 							position={Position.Left}

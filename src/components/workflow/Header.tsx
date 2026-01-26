@@ -1,21 +1,67 @@
 "use client";
 
-import React, {useState, useCallback} from "react";
-import {Save, Loader2, Share2, FolderOpen, Layers} from "lucide-react";
+import React, {useState, useCallback, useEffect, useRef} from "react";
+import {Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {saveWorkflowAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
+import ApiKeyModal from "./ApiKeyModal";
 import toast from "react-hot-toast";
+import {useAuth} from "@clerk/nextjs";
+import type {LLMNodeData, TextNodeData, ImageNodeData} from "@/lib/types";
 
 export default function Header() {
 	
-	const {nodes, edges, workflowId, workflowName, setWorkflowId, setWorkflowName} = useWorkflowStore();
+	const {nodes, edges, workflowId, workflowName, setWorkflowId, setWorkflowName, updateNodeData} = useWorkflowStore();
 	const [isSaving, setIsSaving] = useState(false);
+	const [isRunning, setIsRunning] = useState(false);
 	const [isLoadOpen, setIsLoadOpen] = useState(false);
+	const [isApiKeyOpen, setIsApiKeyOpen] = useState(false);
+	const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "saving">("idle");
+	const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const {userId} = useAuth();
 
 	const [isEditingName, setIsEditingName] = useState(false);
 
-	// --- HANDLE SAVE (Existing Logic) ---
+	// --- AUTO-SAVE LOGIC ---
+	useEffect(() => {
+		// Clear existing timeout
+		if (autoSaveTimeoutRef.current) {
+			clearTimeout(autoSaveTimeoutRef.current);
+		}
+
+		// Don't auto-save if canvas is empty
+		if (nodes.length === 0) return;
+
+		// Set new timeout - auto-save after 3 seconds of inactivity
+		autoSaveTimeoutRef.current = setTimeout(async () => {
+			setAutoSaveStatus("saving");
+
+			try {
+				const result = await saveWorkflowAction({
+					id: workflowId,
+					name: workflowName,
+					nodes,
+					edges,
+				});
+
+				if (result.success && result.id) {
+					setWorkflowId(result.id);
+					setAutoSaveStatus("idle");
+					// Don't show toast for auto-save - too noisy
+				}
+			} catch (error) {
+				console.error("Auto-save failed:", error);
+				setAutoSaveStatus("idle");
+			}
+		}, 3000); // 3 second debounce
+
+		return () => {
+			if (autoSaveTimeoutRef.current) {
+				clearTimeout(autoSaveTimeoutRef.current);
+			}
+		};
+	}, [nodes, edges, workflowName, workflowId, setWorkflowId]);
 	const handleSave = async () => {
 		if (nodes.length === 0) {
 			toast.error("Canvas is empty!");
@@ -85,12 +131,207 @@ export default function Header() {
 		URL.revokeObjectURL(url);
 	}, [nodes, edges, workflowName]);
 
+	// --- HANDLE RUN WORKFLOW (Execute all nodes) ---
+	const handleRunWorkflow = useCallback(async () => {
+		if (nodes.length === 0) {
+			toast.error("Canvas is empty!");
+			return;
+		}
+
+		// Check auth
+		if (!userId) {
+			toast.error("You must be signed in to run workflows!");
+			return;
+		}
+
+		// Check if workflow has any LLM nodes
+		const llmNodes = nodes.filter(node => node.type === "llmNode");
+		if (llmNodes.length === 0) {
+			toast.error("No executable nodes found in workflow!");
+			return;
+		}
+
+		setIsRunning(true);
+		toast.loading(`Running ${llmNodes.length} node(s)...`, { id: "workflow-run" });
+
+		let successCount = 0;
+		let errorCount = 0;
+
+		try {
+			// Execute all LLM nodes in sequence
+			for (const node of llmNodes) {
+				const nodeData = node.data as LLMNodeData;
+				
+				// Update node status to loading
+				updateNodeData(node.id, {status: "loading", errorMessage: undefined});
+
+				try {
+					// Collect inputs from connected nodes
+					const incomingEdges = edges.filter((edge) => edge.target === node.id);
+					
+					let systemPromptBase = "";
+					let userPromptBase = "";
+					const incomingContext = "";
+					const imageUrls: string[] = [];
+
+					// Process connected nodes
+					for (const edge of incomingEdges) {
+						const sourceNode = nodes.find((n) => n.id === edge.source);
+						if (!sourceNode) continue;
+
+						// Handle Text Nodes
+						if (sourceNode.type === "textNode") {
+							const text = (sourceNode.data as TextNodeData).text;
+							if (!text) continue;
+
+							if (edge.targetHandle === "system-prompt") {
+								systemPromptBase += text + "\n";
+							} else if (edge.targetHandle === "prompt") {
+								userPromptBase += text + "\n";
+							}
+						}
+
+						// Handle LLM Nodes (chaining)
+						if (sourceNode.type === "llmNode") {
+							const llmData = sourceNode.data as LLMNodeData;
+							if (llmData.outputs && llmData.outputs.length > 0) {
+								const lastOutput = llmData.outputs[llmData.outputs.length - 1].content;
+								if (edge.targetHandle === "system-prompt") {
+									systemPromptBase += lastOutput + "\n";
+								} else if (edge.targetHandle === "prompt") {
+									userPromptBase = lastOutput;
+								}
+							}
+						}
+
+						// Handle Image Nodes
+						if (sourceNode.type === "imageNode" && edge.targetHandle?.startsWith("image")) {
+							const imageData = sourceNode.data as ImageNodeData;
+							const imageUrl = imageData.file?.url || imageData.image;
+							if (imageUrl && typeof imageUrl === "string") {
+								if (imageUrl.startsWith("data:")) {
+									imageUrls.push(imageUrl);
+								} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
+									const base64 = await urlToBase64(imageUrl);
+									imageUrls.push(base64);
+								}
+							}
+						}
+
+						// Handle Crop Image Nodes
+						if (sourceNode.type === "cropImageNode" && edge.targetHandle?.startsWith("image")) {
+						const cropImageData = sourceNode.data as {croppedImage?: string; originalImage?: string};
+							const imageUrl = cropImageData.croppedImage || cropImageData.originalImage;
+							if (imageUrl && typeof imageUrl === "string") {
+								if (imageUrl.startsWith("data:")) {
+									imageUrls.push(imageUrl);
+								} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
+									const base64 = await urlToBase64(imageUrl);
+									imageUrls.push(base64);
+								}
+							}
+						}
+					}
+
+					// Construct final prompts
+					let finalSystemPrompt = systemPromptBase;
+					if (incomingContext) {
+						finalSystemPrompt += incomingContext;
+					}
+
+					const finalUserPrompt = userPromptBase || "Process this request based on the system instructions and context.";
+
+					// Validation
+					if (!finalSystemPrompt.trim() && !finalUserPrompt.trim() && imageUrls.length === 0) {
+						throw new Error("Input required: Connect a prompt or image");
+					}
+
+					// Call API route
+					const response = await fetch("/api/llm/execute", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							model: nodeData.model,
+							prompt: finalUserPrompt,
+							systemPrompt: finalSystemPrompt || undefined,
+							imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+							temperature: nodeData.temperature || 0.7,
+							userId: userId,
+						}),
+					});
+
+					const result = await response.json();
+
+					if (!response.ok || !result.success) {
+						throw new Error(result.error || "Failed to generate content");
+					}
+
+					// Update node with success
+					updateNodeData(node.id, {
+						status: "success",
+						outputs: [
+							{
+								id: crypto.randomUUID(),
+								type: "text",
+								content: result.text || "No response.",
+								timestamp: Date.now(),
+							},
+						],
+					});
+
+					successCount++;
+
+					// Wait a bit before next node
+					await new Promise(resolve => setTimeout(resolve, 500));
+
+				} catch (error: unknown) {
+					console.error(`Node ${node.id} failed:`, error);
+					const errorMessage = error instanceof Error ? error.message : "Unknown error";
+					updateNodeData(node.id, {status: "error", errorMessage});
+					errorCount++;
+				}
+			}
+
+			// Show final status
+			if (errorCount === 0) {
+				toast.success(`All ${successCount} nodes executed successfully!`, { id: "workflow-run" });
+			} else {
+				toast.error(`${successCount} succeeded, ${errorCount} failed`, { id: "workflow-run" });
+			}
+
+		} catch (error) {
+			console.error("Workflow run error:", error);
+			toast.error("Failed to run workflow", { id: "workflow-run" });
+		} finally {
+			setIsRunning(false);
+		}
+	}, [nodes, edges, userId, updateNodeData]);
+
+	// Helper function to convert URL to base64
+	async function urlToBase64(url: string): Promise<string> {
+		try {
+			const response = await fetch(url);
+			const blob = await response.blob();
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader();
+				reader.onloadend = () => resolve(reader.result as string);
+				reader.onerror = reject;
+				reader.readAsDataURL(blob);
+			});
+		} catch (error) {
+			console.error("Failed to convert URL to base64:", error);
+			throw error;
+		}
+	}
+
 	return (
 		<>
 			<header className="flex items-center justify-between px-6 py-3 border-b border-white/10 bg-[#111]">
-				{/* --- LEFT SIDE (Logo + Name Input) --- */}
+				{/* --- LEFT SIDE (Logo + Name Input + Auto-Save Status) --- */}
 				<div className="flex items-center gap-3">
-				<Layers size={20} className="text-yellow-100" />
+					<Layers size={20} className="text-yellow-100" />
 
 					{/* Editable Workflow Name */}
 					{isEditingName ? (
@@ -116,10 +357,26 @@ export default function Header() {
 							{workflowId && <span className="opacity-50 font-normal text-xs">#{workflowId}</span>}
 						</h1>
 					)}
+
+					{/* Auto-Save Status */}
+					{autoSaveStatus === "saving" && (
+						<div className="flex items-center gap-1 text-xs text-yellow-100/70 ml-4">
+							<Clock size={14} className="animate-spin" />
+							<span>Auto-saving...</span>
+						</div>
+					)}
 				</div>
 
 				{/* --- RIGHT SIDE (Buttons) --- */}
 				<div className="flex gap-2">
+
+					<button
+						onClick={() => setIsApiKeyOpen(true)}
+						className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-white/10 text-white text-xs font-bold rounded-lg hover:bg-white/10 transition-all group">
+						<Key size={14} className="group-hover:text-blue-400 transition-colors" />
+						API KEY
+					</button>
+
 					{/* Open Button */}
 					<button
 						onClick={() => setIsLoadOpen(true)}
@@ -136,6 +393,15 @@ export default function Header() {
 						SHARE
 					</button>
 
+					{/* Run Workflow Button */}
+					<button
+						onClick={handleRunWorkflow}
+						disabled={isRunning}
+						className="flex items-center gap-2 px-4 py-2 bg-green-300/20 text-white text-xs font-bold rounded-lg hover:bg-green-400/20 transition-all disabled:opacity-50 hover:scale-105 active:scale-95">
+						{isRunning ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+						{isRunning ? "RUNNING..." : "RUN WORKFLOW"}
+					</button>
+
 					{/* Save Button */}
 					<button
 						onClick={handleSave}
@@ -148,6 +414,7 @@ export default function Header() {
 			</header>
 
 			<LoadWorkflowModal isOpen={isLoadOpen} onClose={() => setIsLoadOpen(false)} />
+			<ApiKeyModal isOpen={isApiKeyOpen} onClose={() => setIsApiKeyOpen(false)} />
 		</>
 	);
 }

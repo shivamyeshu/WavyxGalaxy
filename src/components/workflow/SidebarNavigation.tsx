@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import {Folder, Plus, Users, AppWindow, MessageCircle} from "lucide-react";
+import {Folder, Plus, Users, AppWindow, MessageCircle, Loader2, Settings} from "lucide-react";
 import {cn} from "@/lib/utils";
 import UserMenu from "./UserMenu";
 
@@ -65,6 +65,12 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 							<Users size={16} />
 							Shared with me
 						</button>
+						<Link
+							href="/settings"
+							className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors mt-2 border-t border-white/10 pt-4">
+							<Settings size={16} />
+							API Settings
+						</Link>
 					</>
 				) : (
 					<>
@@ -79,21 +85,32 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 							className="flex justify-center p-2 rounded-lg text-white/20 cursor-not-allowed">
 							<Users size={18} />
 						</button>
+						<Link
+							href="/settings"
+							className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors border-t border-white/10 mt-2 pt-2">
+							<Settings size={18} />
+						</Link>
 					</>
 				)}
 			</nav>
 
-			{/* Discord Link */}
+			{/* LinkedIn Link */}
 			<div className="p-4 border-t border-white/10">
 				{!isCollapsed ? (
 					<Link
-						href="#"
+						href="https://www.linkedin.com/in/shivam-yeshu"
+						target="_blank"
+						rel="noopener noreferrer"
 						className="flex items-center gap-3 px-3 py-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white text-sm transition-colors">
 						<MessageCircle size={16} />
-						Discord
+						LinkedIn
 					</Link>
 				) : (
-					<Link href="#" className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
+					<Link
+						href="https://www.linkedin.com/in/shivam-yeshu"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="flex justify-center p-2 rounded-lg text-white/50 hover:bg-white/5 hover:text-white transition-colors">
 						<MessageCircle size={18} />
 					</Link>
 				)}
@@ -101,24 +118,5 @@ const SidebarNavigation = ({isCollapsed, onCreateNew, creating = false}: Sidebar
 		</>
 	);
 };
-
-// Helper Components
-function Loader2({size, className}: {size?: number; className?: string}) {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width={size || 24}
-			height={size || 24}
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			className={className}>
-			<path d="M21 12a9 9 0 1 1-6.219-8.56" />
-		</svg>
-	);
-}
 
 export default SidebarNavigation;

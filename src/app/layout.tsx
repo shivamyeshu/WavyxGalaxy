@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 	  description: "Build powerful, scalable workflows with Google Gemini integration, Trigger.dev executions, and professional node-based editing.",
 	  images: [
 		{
-		  url: "/og-image.jpg", 
+		  url: "/logo_trans.jpg", 
 		  width: 1200,
 		  height: 630,
 		  alt: "AI Node-Based Workflow Canvas",

@@ -147,7 +147,7 @@ function FlowContent() {
           newNode = { id: newNodeId, type: "extractFrameNode", position, data: { label: "Extract Frame", status: "idle", frameNumber: 0 } };
           break;
         default:
-          newNode = { id: newNodeId, type: "llmNode", position, data: { label: "Gemini Worker", status: "idle", model: "gemini-1.5-flash", temperature: 0.7, viewMode: "single", outputs: [], imageHandleCount: 1 } };
+          newNode = { id: newNodeId, type: "llmNode", position, data: { label: "Gemini Worker", status: "idle", model: "gemini-2.5-flash", temperature: 0.7, viewMode: "single", outputs: [], imageHandleCount: 1 } };
       }
 
       addNode(newNode);

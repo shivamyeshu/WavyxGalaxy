@@ -1,8 +1,31 @@
 "use server";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { auth } from "@clerk/nextjs/server";
+import prisma from "@/lib/prisma";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Get user's personal API key or use default
+async function getGeminiAI() {
+    try {
+        const { userId } = await auth();
+        
+        if (userId) {
+            const userApiKey = await prisma.userAPIKey.findUnique({
+                where: { userId },
+                select: { geminiApiKey: true },
+            });
+            
+            if (userApiKey?.geminiApiKey) {
+                return new GoogleGenerativeAI(userApiKey.geminiApiKey);
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching user API key:", error);
+    }
+    
+    // Fallback to default API key
+    return new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+}
 
 export async function generateContent(
     model: string,
@@ -10,6 +33,7 @@ export async function generateContent(
     imageUrls: string[] = []
 ) {
     try {
+        const genAI = await getGeminiAI();
         const geminiModel = genAI.getGenerativeModel({ model });
 
         if (imageUrls.length > 0) {

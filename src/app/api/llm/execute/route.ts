@@ -2,9 +2,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { auth } from '@clerk/nextjs/server';
+import prisma from '@/lib/prisma';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+// Helper function to get user's personal API key or use default
+async function getGeminiAI() {
+    try {
+        const { userId } = await auth();
+        
+        if (userId) {
+            const userApiKey = await prisma.userAPIKey.findUnique({
+                where: { userId },
+                select: { geminiApiKey: true },
+            });
+            
+            if (userApiKey?.geminiApiKey) {
+                return new GoogleGenerativeAI(userApiKey.geminiApiKey);
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching user API key:", error);
+    }
+    
+    // Fallback to default API key
+    return new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+}
 
 // Zod Schema for Request Validation
 const ExecuteRequestSchema = z.object({
@@ -44,7 +66,8 @@ export async function POST(req: NextRequest) {
         }
 
         // Generate content using Gemini with retry logic
-        const result = await executeGeminiWithRetry(validated, 3);
+        const genAI = await getGeminiAI();
+        const result = await executeGeminiWithRetry(validated, genAI, 3);
 
         if (!result.success) {
             // Return appropriate status code based on error type (503 for overloaded, 429 for rate limit, 500 for other errors)
@@ -93,12 +116,12 @@ export async function POST(req: NextRequest) {
 }
 
 // Helper function with retry logic (3 attempts with exponential backoff)
-async function executeGeminiWithRetry(request: ExecuteRequest, maxRetries: number = 3) {
+async function executeGeminiWithRetry(request: ExecuteRequest, genAI: GoogleGenerativeAI, maxRetries: number = 3) {
     let lastError: string = "";
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            const result = await executeGemini(request);
+            const result = await executeGemini(request, genAI);
 
             if (result.success) {
                 return result;
@@ -139,7 +162,7 @@ async function executeGeminiWithRetry(request: ExecuteRequest, maxRetries: numbe
 }
 
 // Helper function to execute Gemini API call
-async function executeGemini(request: ExecuteRequest) {
+async function executeGemini(request: ExecuteRequest, genAI: GoogleGenerativeAI) {
     try {
         const geminiModel = genAI.getGenerativeModel({
             model: request.model,
