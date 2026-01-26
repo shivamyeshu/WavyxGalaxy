@@ -17,7 +17,6 @@ import { duplicatePublishedWorkflowAction } from "@/app/actions/workflowActions"
 import type { AppNode } from "@/lib/types";
 import { Copy, ExternalLink, Loader2, Lock, Mail, Sparkles, Wand2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/nextjs";
 
 // Import actual node components
 import TextNode from "@/components/workflow/nodes/TextNode";
@@ -94,7 +93,6 @@ function Flow({ nodes, edges }: { nodes: AppNode[]; edges: Edge[] }) {
 }
 
 export default function ReadOnlyPublishedWorkflow({ name, nodes, edges, shareId, shareUrl, ownerLabel, publishedDate }: Props) {
-    const { userId } = useAuth();
     const router = useRouter();
     const [isCopying, setIsCopying] = useState(false);
     const [isCloning, setIsCloning] = useState(false);
@@ -112,15 +110,14 @@ export default function ReadOnlyPublishedWorkflow({ name, nodes, edges, shareId,
     };
 
     const onDuplicate = async () => {
-        if (!userId) {
-            router.push(`/sign-up?redirect_url=/share/${shareId}`);
-            return;
-        }
         setIsCloning(true);
         const res = await duplicatePublishedWorkflowAction(shareId);
         if (res.success && res.id) {
             toast.success("Workflow copied to your workspace");
             router.push(`/workflows/${res.id}`);
+        } else if (res.error === "Unauthorized") {
+            // If not authenticated, redirect to sign-up
+            router.push(`/sign-up?redirect_url=/share/${shareId}`);
         } else if (res.error) {
             toast.error(res.error);
         } else {
