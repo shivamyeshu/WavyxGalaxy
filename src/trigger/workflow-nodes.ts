@@ -23,21 +23,56 @@ const configureCloudinary = () => {
 
 export const aiGenerator = task({
     id: "generate-text",
-    run: async (payload: { prompt: string }) => {
-        console.log(` Asking Gemini: ${payload.prompt}`);
+    run: async (payload: { 
+        prompt: string; 
+        model?: string;
+        systemPrompt?: string;
+        temperature?: number;
+    }) => {
+        console.log(`\n🤖 [TASK aiGenerator] ===== STARTING =====`);
+        console.log(`📝 [TASK aiGenerator] Prompt: ${payload.prompt.substring(0, 150)}...`);
+        console.log(`⚙️ [TASK aiGenerator] Model: ${payload.model || 'gemini-1.5-flash'}`);
+        console.log(`🌡️ [TASK aiGenerator] Temperature: ${payload.temperature || 0.7}`);
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Use the model specified in payload or default to gemini-1.5-flash
+        const modelName = payload.model || "gemini-1.5-flash";
+        
+        console.log(`🔧 [TASK aiGenerator] Initializing Gemini model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ 
+            model: modelName,
+            generationConfig: {
+                temperature: payload.temperature || 0.7,
+            },
+        });
 
         try {
-            const result = await model.generateContent(payload.prompt);
+            console.log(`⏳ [TASK aiGenerator] Calling Gemini API...`);
+            let fullPrompt = payload.prompt;
+            
+            // Add system prompt if provided
+            if (payload.systemPrompt) {
+                console.log(`📋 [TASK aiGenerator] Adding system prompt (${payload.systemPrompt.length} chars)`);
+                fullPrompt = `${payload.systemPrompt}\n\nUser: ${payload.prompt}`;
+            }
+            
+            console.log(`📤 [TASK aiGenerator] Final prompt length: ${fullPrompt.length} chars`);
+            const result = await model.generateContent(fullPrompt);
+            console.log(`📥 [TASK aiGenerator] Got response from Gemini`);
+            
             const response = await result.response;
             const text = response.text();
+            console.log(`✅ [TASK aiGenerator] Response text length: ${text.length} chars`);
+            console.log(`📝 [TASK aiGenerator] Response preview: ${text.substring(0, 150)}...`);
 
-            return {
+            const returnValue = {
                 success: true,
                 text: text,
             };
+            console.log(`✅ [TASK aiGenerator] ===== COMPLETED =====\n`);
+            return returnValue;
         } catch (error) {
+            console.error(`❌ [TASK aiGenerator] ERROR:`, error);
+            console.error(`❌ [TASK aiGenerator] Error details:`, JSON.stringify(error, null, 2));
             throw new Error(`Gemini API Failed: ${error}`);
         }
     },
