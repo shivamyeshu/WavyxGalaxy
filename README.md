@@ -29,6 +29,13 @@ WeavyxGalaxy is a production-ready visual workflow platform that enables users t
 - **Enterprise Ready**: Clerk authentication, PostgreSQL storage, and comprehensive error handling
 - **Developer Friendly**: Full TypeScript support, clean architecture, and extensive documentation
 
+### Major Update (v1.0.0)
+
+- README refreshed with all feature screenshots from `public/readme/`
+- Architecture section upgraded with text-based diagrams (no external diagram image dependencies)
+- Diagram borders and spacing standardized for clean monospace rendering
+- `package.json` version bumped to `1.0.0` to reflect a major release milestone
+
 ---
 
 ## Table of Contents
@@ -166,49 +173,51 @@ WeavyxGalaxy is a production-ready visual workflow platform that enables users t
 
 ## Demo Walkthrough
 
+Screenshots are shown once in the [Features](#features) section (to avoid repeating the same image multiple times). This section focuses on the flow.
+
 ### Main Landing Page
 The main landing page showcasing WeavyxGalaxy's capabilities.
-![Main Interface](public/readme/main.png)
+Screenshot: see the hero image at the top of this README.
 
 ### Workflow Management Space
 Dedicated workspace where users can manage and organize their workflows.
-![Workflow Space](public/readme/workflowspace.png)
+Screenshot: see [Workflow Management](#workflow-management).
 
 ### Interactive Canvas
 The node-based visual editor for building and customizing workflows.
-![Workflow Canvas](public/readme/flow.png)
+Screenshot: see [Visual Workflow Editor](#visual-workflow-editor).
 
 ### Execution History
 Real-time execution tracking with comprehensive history and logs.
-![Demo with History](public/readme/demowithhistory.png)
+Screenshot: see [Workflow Execution](#workflow-execution).
 
 ### Node Customization
 Options for customizing and managing workflow nodes.
-![Customize and Delete](public/readme/customize&delete.png)
+Screenshot: see [Customize & Delete](#customize--delete).
 
 ### Workflow Sharing
 Share workflows publicly or with specific users via shareable links.
-![Share Workflow](public/readme/shareworkflow.png)
+Screenshot: see [Publishing & Sharing](#publishing--sharing).
 
 ### API Key Management
 User-specific API key configuration for cost control.
-![API Key Settings](public/readme/apikey.png)
+Screenshot: see [Authentication & Security](#authentication--security).
 
 ### Publishing Workflows
 Create and update workflow publications for community sharing.
-![Create and Publish](public/readme/makenew+updatepublish.png)
+Screenshot: see [Create & Update](#create--update).
 
 ### Public Gallery
 Browse and discover publicly published workflows.
-![Public Workflows](public/readme/publicallypublished.png)
+Screenshot: see [Public Workflow Publishing](#public-workflow-publishing).
 
 ### Published Workflows Section
 Dedicated section for managing your published workflows.
-![Published Section](public/readme/publishedworkflowsection.png)
+Screenshot: see [Publishing & Sharing](#publishing--sharing).
 
 ### Interactive Tutorials
 Built-in guides to help users learn workflow creation.
-![Tutorials](public/readme/tutorials.png)
+Screenshot: see [Built-in Tutorials](#built-in-tutorials).
 
 ---
 
@@ -1126,8 +1135,11 @@ Need help?
 
 - Check existing [GitHub Issues](https://github.com/shivamyeshu/WeavyxGalaxy/issues)
 - Review inline code documentation
-- Explore the `/docs` directory
 - Join discussions in the repository
 
 ---
+
+
+
+
 
