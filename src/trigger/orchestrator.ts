@@ -27,43 +27,49 @@ interface WorkflowGraph {
 export const orchestrator = task({
     id: "workflow-orchestrator",
     run: async (payload: { runId: string }) => {
-        console.log("🚀 [ORCHESTRATOR] Task started with payload:", payload);
+        console.log("[INFO] [ORCHESTRATOR] Task started with payload:", payload);
         
         const run = await prisma.workflowRun.findUnique({
             where: { id: payload.runId },
-            include: { workflow: true },
+            include: { 
+                workflow: { 
+                    include: { user: true } 
+                } 
+            },
         });
-        console.log("📊 [ORCHESTRATOR] Found run:", { id: run?.id, workflowId: run?.workflow?.id });
+        console.log("[INFO] [ORCHESTRATOR] Found run:", { id: run?.id, workflowId: run?.workflow?.id, userId: run?.workflow?.user?.userId });
 
         if (!run) throw new Error(`Run ${payload.runId} not found`);
 
-        console.log("🔄 [ORCHESTRATOR] Updating run status to RUNNING...");
+        console.log("[INFO] [ORCHESTRATOR] Updating run status to RUNNING...");
         // Update run status to RUNNING
         await prisma.workflowRun.update({
             where: { id: run.id },
             data: { status: "RUNNING" },
         });
-        console.log("✅ [ORCHESTRATOR] Run status updated to RUNNING");
+        console.log("[SUCCESS] [ORCHESTRATOR] Run status updated to RUNNING");
 
         const graph = run.workflow.data as WorkflowGraph;
         const nodes = graph.nodes;
         const edges = graph.edges;
 
-        console.log(`📝 [ORCHESTRATOR] Starting execution for workflow: ${run.workflow.name}`);
-        console.log(`📊 [ORCHESTRATOR] Total nodes: ${nodes.length}, Edges: ${edges.length}`);
-        console.log(`🔗 [ORCHESTRATOR] Node types:`, nodes.map(n => ({ id: n.id, type: n.type })));
+        console.log(`[INFO] [ORCHESTRATOR] Starting execution for workflow: ${run.workflow.name}`);
+        console.log(`[INFO] [ORCHESTRATOR] Total nodes: ${nodes.length}, Edges: ${edges.length}`);
+        console.log(`[INFO] [ORCHESTRATOR] Node types:`, nodes.map(n => ({ id: n.id, type: n.type })));
 
         try {
-            console.log("🏗️ [ORCHESTRATOR] Building dependency graph...");
+            console.log("[INFO] [ORCHESTRATOR] Building dependency graph...");
             // Build dependency graph
             const dependencyMap = buildDependencyGraph(nodes, edges);
-            console.log("✅ [ORCHESTRATOR] Dependency graph built:", 
+            console.log("[SUCCESS] [ORCHESTRATOR] Dependency graph built:", 
                 Array.from(dependencyMap.entries()).map(([k, v]) => ({ node: k, deps: Array.from(v) })));
             
-            console.log("⚡ [ORCHESTRATOR] Starting parallel node execution...");
+            console.log("[INFO] [ORCHESTRATOR] Starting parallel node execution...");
             // Execute nodes with parallel execution where possible
-            await executeNodesInParallel(nodes, edges, dependencyMap, run.id);
-            console.log("✅ [ORCHESTRATOR] All nodes executed successfully");
+            const userId = run.workflow.user?.userId;
+            console.log(`[INFO] [ORCHESTRATOR] User ID for API key lookup: ${userId || '(none)'}`);
+            await executeNodesInParallel(nodes, edges, dependencyMap, run.id, userId);
+            console.log("[SUCCESS] [ORCHESTRATOR] All nodes executed successfully");
 
             // Mark workflow as completed
             await prisma.workflowRun.update({
@@ -158,14 +164,15 @@ async function executeNodesInParallel(
     nodes: NodeData[], 
     edges: EdgeData[], 
     dependencyMap: Map<string, Set<string>>,
-    runId: string
+    runId: string,
+    userId?: string
 ): Promise<void> {
-    console.log("🔄 [PARALLEL] Starting parallel execution engine");
+    console.log("[INFO] [PARALLEL] Starting parallel execution engine");
     const executedNodes = new Set<string>();
     const nodeOutputs = new Map<string, any>();
     
     const totalExecutableNodes = nodes.filter(isExecutableNode).length;
-    console.log(`📊 [PARALLEL] Total executable nodes: ${totalExecutableNodes}`);
+    console.log(`[INFO] [PARALLEL] Total executable nodes: ${totalExecutableNodes}`);
     
     // Mark all non-executable nodes as "executed" since they don't need execution
     // But DON'T count them in the executable tracking
@@ -173,7 +180,7 @@ async function executeNodesInParallel(
     nodes.forEach(node => {
         if (!isExecutableNode(node)) {
             nonExecutableNodes.add(node.id);
-            console.log(`✅ [PARALLEL] Marking non-executable node: ${node.id} (${node.type})`);
+            console.log(`[INFO] [PARALLEL] Marking non-executable node: ${node.id} (${node.type})`);
         }
     });
     
@@ -181,11 +188,11 @@ async function executeNodesInParallel(
     // Continue until all executable nodes are processed
     while (executedNodes.size < totalExecutableNodes) {
         waveNumber++;
-        console.log(`\n🌊 [PARALLEL] === WAVE ${waveNumber} === (${executedNodes.size}/${totalExecutableNodes} completed)`);
+        console.log(`\n[INFO] [PARALLEL] === WAVE ${waveNumber} === (${executedNodes.size}/${totalExecutableNodes} completed)`);
         
         // Get nodes that are ready to execute
         const readyNodes = getReadyNodes(nodes, dependencyMap, executedNodes, nonExecutableNodes);
-        console.log(`🎯 [PARALLEL] Ready nodes in wave ${waveNumber}:`, readyNodes.map(n => ({ id: n.id, type: n.type })));
+        console.log(`[INFO] [PARALLEL] Ready nodes in wave ${waveNumber}:`, readyNodes.map(n => ({ id: n.id, type: n.type })));
         
         if (readyNodes.length === 0) {
             // No more nodes can be executed - check for circular dependencies
@@ -201,17 +208,17 @@ async function executeNodesInParallel(
             break;
         }
         
-        console.log(`⚡ [PARALLEL] Executing ${readyNodes.length} nodes in parallel...`);
+        console.log(`[INFO] [PARALLEL] Executing ${readyNodes.length} nodes in parallel...`);
         
         // Execute all ready nodes in parallel
         const executionPromises = readyNodes.map(node => {
-            console.log(`🚀 [PARALLEL] Launching execution for node: ${node.id} (${node.type})`);
+            console.log(`[INFO] [PARALLEL] Launching execution for node: ${node.id} (${node.type})`);
             return executeNode(node, edges, nodes, nodeOutputs, runId);
         });
         
-        console.log(`⏳ [PARALLEL] Waiting for ${executionPromises.length} promises...`);
+        console.log(`[INFO] [PARALLEL] Waiting for ${executionPromises.length} promises...`);
         const results = await Promise.allSettled(executionPromises);
-        console.log(`✅ [PARALLEL] All ${results.length} promises settled`);
+        console.log(`[SUCCESS] [PARALLEL] All ${results.length} promises settled`);
         
         // Mark nodes as executed and store outputs
         results.forEach((result, index) => {
@@ -231,12 +238,13 @@ async function executeNode(
     edges: EdgeData[],
     allNodes: NodeData[],
     nodeOutputs: Map<string, any>,
-    runId: string
+    runId: string,
+    userId?: string
 ): Promise<any> {
-    console.log(`\n🎬 [NODE ${node.id}] Starting execution (${node.type})`);
-    console.log(`📋 [NODE ${node.id}] Node data:`, JSON.stringify(node.data, null, 2));
+    console.log(`\n[INFO] [NODE ${node.id}] Starting execution (${node.type})`);
+    console.log(`[INFO] [NODE ${node.id}] Node data:`, JSON.stringify(node.data, null, 2));
     
-    console.log(`💾 [NODE ${node.id}] Creating execution record...`);
+    console.log(`[INFO] [NODE ${node.id}] Creating execution record...`);
     const executionRecord = await prisma.nodeExecution.create({
         data: {
             runId: runId,
@@ -256,7 +264,7 @@ async function executeNode(
         
         switch (node.type) {
             case "llmNode":
-                result = await executeLLMNode(node, edges, allNodes, nodeOutputs);
+                result = await executeLLMNode(node, edges, allNodes, nodeOutputs, userId);
                 break;
             case "cropImageNode":
                 result = await executeCropImageNode(node, edges, allNodes, nodeOutputs);
@@ -270,8 +278,8 @@ async function executeNode(
         
         const duration = Date.now() - startTime;
         
-        console.log(`✅ [EXECUTE] Node ${node.id} (${node.type}) completed in ${duration}ms`);
-        console.log(`💾 [EXECUTE] Saving output to database:`, JSON.stringify(result).substring(0, 200));
+        console.log(`[SUCCESS] [EXECUTE] Node ${node.id} (${node.type}) completed in ${duration}ms`);
+        console.log(`[INFO] [EXECUTE] Saving output to database:`, JSON.stringify(result).substring(0, 200));
         
         const updatedExecution = await prisma.nodeExecution.update({
             where: { id: executionRecord.id },
@@ -283,7 +291,7 @@ async function executeNode(
             },
         });
         
-        console.log(`✅ [EXECUTE] NodeExecution ${updatedExecution.id} saved - Status: ${updatedExecution.status}`);
+        console.log(`[SUCCESS] [EXECUTE] NodeExecution ${updatedExecution.id} saved - Status: ${updatedExecution.status}`);
         
         return result;
     } catch (error) {
@@ -304,22 +312,60 @@ async function executeNode(
     }
 }
 
+// Helper function to get user's API key from database
+async function getUserApiKey(userId?: string): Promise<string | null> {
+    console.log(`[INFO] [API KEY] Fetching API key for userId: ${userId || '(none)'}`);
+    
+    if (!userId) {
+        console.log(`[WARN] [API KEY] No userId provided, returning null`);
+        return null;
+    }
+    
+    try {
+        const userApiKey = await prisma.userAPIKey.findUnique({
+            where: { userId },
+        });
+        
+        if (userApiKey?.geminiApiKey) {
+            const maskedKey = userApiKey.geminiApiKey.substring(0, 10) + '...' + userApiKey.geminiApiKey.slice(-4);
+            console.log(`[SUCCESS] [API KEY] Found user API key: ${maskedKey}`);
+            return userApiKey.geminiApiKey;
+        } else {
+            console.log(`[WARN] [API KEY] No API key found in database for user ${userId}`);
+            return null;
+        }
+    } catch (error) {
+        console.log(`[ERROR] [API KEY] Error fetching user API key:`, error);
+        return null;
+    }
+}
+
 // Execute LLM Node
 async function executeLLMNode(
     node: NodeData,
     edges: EdgeData[],
     allNodes: NodeData[],
-    nodeOutputs: Map<string, any>
+    nodeOutputs: Map<string, any>,
+    userId?: string
 ): Promise<any> {
-    console.log(`🤖 [LLM ${node.id}] Executing LLM node...`);
+    console.log(`[INFO] [LLM ${node.id}] Executing LLM node...`);
+    
+    // Fetch user's API key from database
+    const userApiKey = await getUserApiKey(userId);
+    if (userApiKey) {
+        console.log(`[INFO] [LLM ${node.id}] Using USER's API key`);
+    } else {
+        console.log(`[INFO] [LLM ${node.id}] Using SERVER API key (user key not found)`);
+    }
     
     // Collect inputs from connected nodes
     const incomingEdges = edges.filter(edge => edge.target === node.id);
-    console.log(`🔗 [LLM ${node.id}] Incoming edges: ${incomingEdges.length}`);
+    console.log(`[INFO] [LLM ${node.id}] Incoming edges: ${incomingEdges.length}`);
     
     let userPrompt = node.data.prompt || "";
     let systemPrompt = node.data.systemPrompt || "";
-    console.log(`📝 [LLM ${node.id}] Initial prompts - User: "${userPrompt.substring(0, 50)}...", System: "${systemPrompt.substring(0, 50)}..."`);
+    const imageUrls: string[] = [];
+    console.log(`[INFO] [LLM ${node.id}] Initial prompts - User: "${userPrompt.substring(0, 50)}...", System: "${systemPrompt.substring(0, 50)}..."`);
     
     // Gather inputs from predecessor nodes
     for (const edge of incomingEdges) {
@@ -346,11 +392,47 @@ async function executeLLMNode(
                 userPrompt += "\n" + sourceOutput.text;
             }
         }
+        
+        // Handle Image Nodes (connected to any image handle)
+        if (sourceNode.type === "imageNode" && edge.targetHandle?.startsWith("image")) {
+            const imageData = sourceNode.data;
+            const imageUrl = imageData.file?.url || imageData.image;
+            
+            if (imageUrl && typeof imageUrl === "string") {
+                console.log(`[INFO] [LLM ${node.id}] Found image from imageNode: ${imageData.file?.name || 'image'}`);
+                
+                // Gemini needs base64, so if it's a URL, we'll pass it as-is
+                // (In production, you'd want to fetch and convert to base64)
+                if (imageUrl.startsWith("data:")) {
+                    imageUrls.push(imageUrl);
+                } else {
+                    console.warn(`[WARN] [LLM ${node.id}] Image URL detected (not base64): ${imageUrl.substring(0, 50)}...`);
+                    // You may want to fetch and convert here
+                    imageUrls.push(imageUrl);
+                }
+            }
+        }
+        
+        // Handle Crop Image Nodes (images after processing)
+        if (sourceNode.type === "cropImageNode" && edge.targetHandle?.startsWith("image")) {
+            const imageUrl = sourceNode.data.croppedImage || sourceNode.data.originalImage;
+            
+            if (imageUrl && typeof imageUrl === "string") {
+                console.log(`[INFO] [LLM ${node.id}] Found cropped image`);
+                
+                if (imageUrl.startsWith("data:")) {
+                    imageUrls.push(imageUrl);
+                } else {
+                    console.warn(`[WARN] [LLM ${node.id}] Cropped image URL detected (not base64): ${imageUrl.substring(0, 50)}...`);
+                    imageUrls.push(imageUrl);
+                }
+            }
+        }
     }
     
     if (!userPrompt.trim()) {
         userPrompt = "Generate a response";
-        console.log(`⚠️ [LLM ${node.id}] No user prompt found, using default`);
+        console.log(`[WARN] [LLM ${node.id}] No user prompt found, using default`);
     }
     
     const taskPayload = {
@@ -358,19 +440,22 @@ async function executeLLMNode(
         systemPrompt: systemPrompt.trim() || undefined,
         model: node.data.model || "gemini-1.5-flash",
         temperature: node.data.temperature || 0.7,
+        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+        apiKey: userApiKey || undefined,  // 🔑 Pass user's API key if available
     };
     
-    console.log(`\n📥 [LLM ${node.id}] ========== INPUT ==========`);
+    console.log(`\n[INFO] [LLM ${node.id}] ========== INPUT ==========`);
     console.log(`   Model: ${taskPayload.model}`);
     console.log(`   Temperature: ${taskPayload.temperature}`);
     console.log(`   System Prompt: ${taskPayload.systemPrompt || '(none)'}`);
     console.log(`   User Prompt: ${taskPayload.prompt}`);
-    console.log(`🚀 [LLM ${node.id}] Triggering aiGenerator task...`);
+    console.log(`   Images: ${imageUrls.length}`);
+    console.log(`[INFO] [LLM ${node.id}] Triggering aiGenerator task...`);
     
     // Execute via Trigger.dev task with full parameters
     const triggerResult = await aiGenerator.triggerAndWait(taskPayload);
     
-    console.log(`\n🔍 [LLM ${node.id}] ========== RAW TRIGGER RESULT ==========`);
+    console.log(`\n[DEBUG] [LLM ${node.id}] ========== RAW TRIGGER RESULT ==========`);
     console.log(`   Full result:`, JSON.stringify(triggerResult, null, 2));
     
     // Extract the actual output from Trigger.dev response
@@ -378,11 +463,11 @@ async function executeLLMNode(
         ? triggerResult.output 
         : triggerResult;
     
-    console.log(`\n📤 [LLM ${node.id}] ========== OUTPUT ==========`);
+    console.log(`\n[INFO] [LLM ${node.id}] ========== OUTPUT ==========`);
     console.log(`   Success: ${result.success}`);
     console.log(`   Text Length: ${result.text?.length || 0} chars`);
     console.log(`   Response Preview: ${result.text?.substring(0, 200)}${result.text?.length > 200 ? '...' : ''}`);
-    console.log(`✅ [LLM ${node.id}] Task completed successfully\n`);
+    console.log(`[SUCCESS] [LLM ${node.id}] Task completed successfully\n`);
     
     return result;
 }
@@ -466,3 +551,76 @@ async function executeExtractFrameNode(
     
     return result;
 }
+
+// ==================== SINGLE NODE EXECUTOR ====================
+// Execute a single node (for manual testing via "Run Model" button)
+export const singleNodeExecutor = task({
+    id: "single-node-executor",
+    run: async (payload: { 
+        runId: string; 
+        nodeId: string; 
+        nodeData: any;
+        edges: EdgeData[];
+        allNodes: NodeData[];
+        userId?: string;  // 🔑 User ID for API key lookup
+    }) => {
+        console.log(`[INFO] [SINGLE NODE] Executing node ${payload.nodeId}`);
+        console.log(`[INFO] [SINGLE NODE] User ID for API key lookup: ${payload.userId || '(none)'}`);
+        
+        try {
+            // Create the node object
+            const node: NodeData = {
+                id: payload.nodeId,
+                type: payload.nodeData.type,
+                position: { x: 0, y: 0 }, // Not needed for execution
+                data: payload.nodeData,
+            };
+            
+            // Create empty nodeOutputs map (no upstream outputs for single execution)
+            const nodeOutputs = new Map<string, any>();
+            
+            // Execute the node
+            const result = await executeNode(
+                node, 
+                payload.edges, 
+                payload.allNodes, 
+                nodeOutputs, 
+                payload.runId,
+                payload.userId  // 🔑 Pass userId for API key lookup
+            );
+            
+            console.log(`[SUCCESS] [SINGLE NODE] Node ${payload.nodeId} executed successfully`);
+            
+            // Update run status to completed
+            console.log(`[INFO] [SINGLE NODE] Updating WorkflowRun ${payload.runId} to COMPLETED...`);
+            await prisma.workflowRun.update({
+                where: { id: payload.runId },
+                data: { 
+                    status: "COMPLETED",
+                    finishedAt: new Date(),
+                },
+            });
+            console.log(`[SUCCESS] [SINGLE NODE] WorkflowRun ${payload.runId} status updated to COMPLETED`);
+            
+            return {
+                success: true,
+                nodeId: payload.nodeId,
+                output: result,
+            };
+            
+        } catch (error) {
+            console.error(`[ERROR] [SINGLE NODE] Node ${payload.nodeId} failed:`, error);
+            
+            // Update run status to failed
+            await prisma.workflowRun.update({
+                where: { id: payload.runId },
+                data: { 
+                    status: "FAILED",
+                    finishedAt: new Date(),
+                },
+            });
+            
+            throw error;
+        }
+    },
+});

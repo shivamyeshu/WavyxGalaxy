@@ -7,23 +7,23 @@ export async function POST(
     request: NextRequest,
     { params }: { params: Promise<{ workflowId: string }> }
 ) {
-    console.log("\n🌐 [API POST] ===== Workflow Run Request =====");
+    console.log("\n[INFO] [API POST] ===== Workflow Run Request =====");
     try {
-        console.log("🔐 [API POST] Checking authentication...");
+        console.log("[INFO] [API POST] Checking authentication...");
         const { userId } = await auth();
         if (!userId) {
-            console.log("❌ [API POST] Unauthorized - No user ID");
+            console.log("[ERROR] [API POST] Unauthorized - No user ID");
             return NextResponse.json(
                 { success: false, error: "Unauthorized" },
                 { status: 401 }
             );
         }
-        console.log(`✅ [API POST] Authenticated user: ${userId}`);
+        console.log(`[SUCCESS] [API POST] Authenticated user: ${userId}`);
 
         const { workflowId } = await params;
-        console.log(`📋 [API POST] Workflow ID from params: ${workflowId}`);
+        console.log(`[INFO] [API POST] Workflow ID from params: ${workflowId}`);
         const workflowIdInt = parseInt(workflowId);
-        console.log(`🔢 [API POST] Parsed workflow ID: ${workflowIdInt}`);
+        console.log(`[INFO] [API POST] Parsed workflow ID: ${workflowIdInt}`);
 
         if (isNaN(workflowIdInt)) {
             return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(
             );
         }
 
-        console.log(`🔍 [API POST] Looking up workflow ${workflowIdInt} for user ${userId}...`);
+        console.log(`[INFO] [API POST] Looking up workflow ${workflowIdInt} for user ${userId}...`);
         // Verify workflow exists and belongs to user
         const workflow = await prisma.workflow.findUnique({
             where: {
@@ -41,10 +41,10 @@ export async function POST(
             },
         });
         
-        console.log(`📊 [API POST] Workflow found:`, { id: workflow?.id, name: workflow?.name });
+        console.log(`[INFO] [API POST] Workflow found:`, { id: workflow?.id, name: workflow?.name });
 
         if (!workflow) {
-            console.log(`❌ [API POST] Workflow not found or unauthorized`);
+            console.log(`[ERROR] [API POST] Workflow not found or unauthorized`);
             return NextResponse.json(
                 { success: false, error: "Workflow not found" },
                 { status: 404 }
@@ -72,7 +72,7 @@ export async function POST(
             );
         }
 
-        console.log(`💾 [API POST] Creating WorkflowRun record...`);
+        console.log(`[INFO] [API POST] Creating WorkflowRun record...`);
         // Create a WorkflowRun record
         const run = await prisma.workflowRun.create({
             data: {
@@ -81,9 +81,9 @@ export async function POST(
                 triggerType: "MANUAL",
             },
         });
-        console.log(`✅ [API POST] WorkflowRun created with ID: ${run.id}`);
+        console.log(`[SUCCESS] [API POST] WorkflowRun created with ID: ${run.id}`);
 
-        console.log(`🚀 [API POST] Triggering Trigger.dev orchestrator...`);
+        console.log(`[INFO] [API POST] Triggering Trigger.dev orchestrator...`);
         
         let triggerHandleId: string | undefined;
         
@@ -93,24 +93,24 @@ export async function POST(
                 runId: run.id,
             });
             triggerHandleId = handle.id;
-            console.log(`✅ [API POST] Orchestrator triggered with handle: ${triggerHandleId}`);
+            console.log(`[SUCCESS] [API POST] Orchestrator triggered with handle: ${triggerHandleId}`);
         } catch (triggerError) {
-            console.error(`❌ [API POST] Trigger.dev failed:`, triggerError);
-            console.log(`⚠️ [API POST] Falling back to direct execution...`);
+            console.error(`[ERROR] [API POST] Trigger.dev failed:`, triggerError);
+            console.log(`[WARN] [API POST] Falling back to direct execution...`);
             
             // Fallback: Execute directly if Trigger.dev is not available
             // This allows testing without Trigger.dev running
             import("@/trigger/orchestrator").then(async (module) => {
                 try {
                     await module.orchestrator.run({ runId: run.id });
-                    console.log(`✅ [API POST] Direct execution completed`);
+                    console.log(`[SUCCESS] [API POST] Direct execution completed`);
                 } catch (execError) {
-                    console.error(`❌ [API POST] Direct execution failed:`, execError);
+                    console.error(`[ERROR] [API POST] Direct execution failed:`, execError);
                 }
             });
         }
         
-        console.log(`✅ [API POST] ===== Request Complete =====\n`);
+        console.log(`[SUCCESS] [API POST] ===== Request Complete =====\n`);
 
         return NextResponse.json({
             success: true,

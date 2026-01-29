@@ -28,17 +28,39 @@ export const aiGenerator = task({
         model?: string;
         systemPrompt?: string;
         temperature?: number;
+        imageUrls?: string[];
+        apiKey?: string;  // 🔑 User's API key (optional)
     }) => {
-        console.log(`\n🤖 [TASK aiGenerator] ===== STARTING =====`);
-        console.log(`📝 [TASK aiGenerator] Prompt: ${payload.prompt.substring(0, 150)}...`);
-        console.log(`⚙️ [TASK aiGenerator] Model: ${payload.model || 'gemini-1.5-flash'}`);
-        console.log(`🌡️ [TASK aiGenerator] Temperature: ${payload.temperature || 0.7}`);
+        console.log(`\n[INFO] [TASK aiGenerator] ===== STARTING =====`);
+        console.log(`[INFO] [TASK aiGenerator] Prompt: ${payload.prompt.substring(0, 150)}...`);
+        console.log(`[INFO] [TASK aiGenerator] Model: ${payload.model || 'gemini-1.5-flash'}`);
+        console.log(`[INFO] [TASK aiGenerator] Temperature: ${payload.temperature || 0.7}`);
+        console.log(`[INFO] [TASK aiGenerator] Images: ${payload.imageUrls?.length || 0}`);
+        
+        // Log API key info (masked for security)
+        if (payload.apiKey) {
+            const maskedKey = payload.apiKey.substring(0, 10) + '...' + payload.apiKey.slice(-4);
+            console.log(`[INFO] [TASK aiGenerator] Using USER API key: ${maskedKey}`);
+        } else if (process.env.GEMINI_API_KEY) {
+            const serverKey = process.env.GEMINI_API_KEY;
+            const maskedServerKey = serverKey.substring(0, 10) + '...' + serverKey.slice(-4);
+            console.log(`[INFO] [TASK aiGenerator] Using SERVER API key: ${maskedServerKey}`);
+        } else {
+            console.log(`[ERROR] [TASK aiGenerator] NO API KEY AVAILABLE!`);
+        }
 
         // Use the model specified in payload or default to gemini-1.5-flash
         const modelName = payload.model || "gemini-1.5-flash";
         
-        console.log(`🔧 [TASK aiGenerator] Initializing Gemini model: ${modelName}`);
-        const model = genAI.getGenerativeModel({ 
+        // Initialize Gemini with user's API key OR server API key
+        const apiKey = payload.apiKey || process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error("No API key available (user or server)");
+        }
+        
+        const genAIInstance = new GoogleGenerativeAI(apiKey);
+        console.log(`[INFO] [TASK aiGenerator] Initializing Gemini model: ${modelName}`);
+        const model = genAIInstance.getGenerativeModel({ 
             model: modelName,
             generationConfig: {
                 temperature: payload.temperature || 0.7,
@@ -46,33 +68,102 @@ export const aiGenerator = task({
         });
 
         try {
-            console.log(`⏳ [TASK aiGenerator] Calling Gemini API...`);
+            console.log(`[INFO] [TASK aiGenerator] Calling Gemini API...`);
             let fullPrompt = payload.prompt;
             
             // Add system prompt if provided
             if (payload.systemPrompt) {
-                console.log(`📋 [TASK aiGenerator] Adding system prompt (${payload.systemPrompt.length} chars)`);
+                console.log(`[INFO] [TASK aiGenerator] Adding system prompt (${payload.systemPrompt.length} chars)`);
                 fullPrompt = `${payload.systemPrompt}\n\nUser: ${payload.prompt}`;
             }
             
-            console.log(`📤 [TASK aiGenerator] Final prompt length: ${fullPrompt.length} chars`);
-            const result = await model.generateContent(fullPrompt);
-            console.log(`📥 [TASK aiGenerator] Got response from Gemini`);
+            console.log(`[INFO] [TASK aiGenerator] Final prompt length: ${fullPrompt.length} chars`);
+            
+            // Handle images if provided
+            let result;
+            if (payload.imageUrls && payload.imageUrls.length > 0) {
+                console.log(`[INFO] [TASK aiGenerator] Processing ${payload.imageUrls.length} images...`);
+                
+                // Convert images to Gemini format (handles both base64 and URLs)
+                const imageParts = await Promise.all(
+                    payload.imageUrls.map(async (imageUrl) => {
+                        // Check if it's a base64 data URL
+                        if (imageUrl.startsWith("data:")) {
+                            // Extract base64 data and mime type
+                            const matches = imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+                            if (matches) {
+                                return {
+                                    inlineData: {
+                                        data: matches[2],
+                                        mimeType: matches[1],
+                                    },
+                                };
+                            }
+                            console.warn(`[WARN] [TASK aiGenerator] Invalid base64 format`);
+                            return null;
+                        }
+                        
+                        // It's a URL, fetch and convert to base64
+                        console.log(`[INFO] [TASK aiGenerator] Fetching image from URL: ${imageUrl.substring(0, 60)}...`);
+                        try {
+                            const response = await fetch(imageUrl);
+                            if (!response.ok) {
+                                console.log(`[ERROR] [TASK aiGenerator] Failed to fetch image: ${response.status}`);
+                                return null;
+                            }
+                            
+                            const arrayBuffer = await response.arrayBuffer();
+                            const buffer = Buffer.from(arrayBuffer);
+                            const base64Data = buffer.toString('base64');
+                            
+                            // Get MIME type from response headers
+                            const contentType = response.headers.get('content-type') || 'image/jpeg';
+                            console.log(`[SUCCESS] [TASK aiGenerator] Converted URL to base64 (${contentType})`);
+                            
+                            return {
+                                inlineData: {
+                                    data: base64Data,
+                                    mimeType: contentType,
+                                },
+                            };
+                        } catch (error) {
+                            console.log(`[ERROR] [TASK aiGenerator] Error fetching image: ${error}`);
+                            return null;
+                        }
+                    })
+                );
+                
+                const validImageParts = imageParts.filter(Boolean);
+                console.log(`[SUCCESS] [TASK aiGenerator] Converted ${validImageParts.length} images to Gemini format`);
+                
+                if (validImageParts.length > 0) {
+                    // Generate content with images
+                    result = await model.generateContent([fullPrompt, ...validImageParts]);
+                } else {
+                    // Fallback to text-only if no valid images
+                    result = await model.generateContent(fullPrompt);
+                }
+            } else {
+                // Text-only generation
+                result = await model.generateContent(fullPrompt);
+            }
+            
+            console.log(`[INFO] [TASK aiGenerator] Got response from Gemini`);
             
             const response = await result.response;
             const text = response.text();
-            console.log(`✅ [TASK aiGenerator] Response text length: ${text.length} chars`);
-            console.log(`📝 [TASK aiGenerator] Response preview: ${text.substring(0, 150)}...`);
+            console.log(`[SUCCESS] [TASK aiGenerator] Response text length: ${text.length} chars`);
+            console.log(`[INFO] [TASK aiGenerator] Response preview: ${text.substring(0, 150)}...`);
 
             const returnValue = {
                 success: true,
                 text: text,
             };
-            console.log(`✅ [TASK aiGenerator] ===== COMPLETED =====\n`);
+            console.log(`[SUCCESS] [TASK aiGenerator] ===== COMPLETED =====\n`);
             return returnValue;
         } catch (error) {
-            console.error(`❌ [TASK aiGenerator] ERROR:`, error);
-            console.error(`❌ [TASK aiGenerator] Error details:`, JSON.stringify(error, null, 2));
+            console.error(`[ERROR] [TASK aiGenerator] ERROR:`, error);
+            console.error(`[ERROR] [TASK aiGenerator] Error details:`, JSON.stringify(error, null, 2));
             throw new Error(`Gemini API Failed: ${error}`);
         }
     },
