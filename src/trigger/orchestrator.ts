@@ -513,7 +513,11 @@ async function executeCropImageNode(
     
     console.log(`[SUCCESS] [CROP ${node.id}] Crop completed:`, result.ok);
     
-    return result.output;
+    if (result.ok) {
+        return result.output;
+    } else {
+        return { success: false, error: result.error };
+    }
 }
 
 // Execute Extract Frame Node
@@ -558,7 +562,11 @@ async function executeExtractFrameNode(
     
     console.log(`[SUCCESS] [EXTRACT FRAME ${node.id}] Extraction completed:`, result.ok);
     
-    return result.output;
+    if (result.ok) {
+        return result.output;
+    } else {
+        return { success: false, error: result.error };
+    }
 }
 
 // ==================== SINGLE NODE EXECUTOR ====================
