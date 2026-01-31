@@ -208,27 +208,22 @@ async function executeNodesInParallel(
             break;
         }
         
-        console.log(`[INFO] [PARALLEL] Executing ${readyNodes.length} nodes in parallel...`);
+        console.log(`[INFO] [SEQUENTIAL] Executing ${readyNodes.length} nodes sequentially...`);
         
-        // Execute all ready nodes in parallel
-        const executionPromises = readyNodes.map(node => {
-            console.log(`[INFO] [PARALLEL] Launching execution for node: ${node.id} (${node.type})`);
-            return executeNode(node, edges, nodes, nodeOutputs, runId);
-        });
-        
-        console.log(`[INFO] [PARALLEL] Waiting for ${executionPromises.length} promises...`);
-        const results = await Promise.allSettled(executionPromises);
-        console.log(`[SUCCESS] [PARALLEL] All ${results.length} promises settled`);
-        
-        // Mark nodes as executed and store outputs
-        results.forEach((result, index) => {
-            const node = readyNodes[index];
-            executedNodes.add(node.id);
-            
-            if (result.status === "fulfilled") {
-                nodeOutputs.set(node.id, result.value);
+        // Execute all ready nodes sequentially (Trigger.dev v4 doesn't support parallel waits)
+        for (const node of readyNodes) {
+            console.log(`[INFO] [SEQUENTIAL] Executing node: ${node.id} (${node.type})`);
+            try {
+                const result = await executeNode(node, edges, nodes, nodeOutputs, runId, userId);
+                executedNodes.add(node.id);
+                nodeOutputs.set(node.id, result);
+                console.log(`[SUCCESS] [SEQUENTIAL] Node ${node.id} completed`);
+            } catch (error) {
+                console.error(`[ERROR] [SEQUENTIAL] Node ${node.id} failed:`, error);
+                executedNodes.add(node.id);
+                throw error;
             }
-        });
+        }
     }
 }
 
@@ -479,7 +474,9 @@ async function executeCropImageNode(
     allNodes: NodeData[],
     nodeOutputs: Map<string, any>
 ): Promise<any> {
-    // Get image input from connected image node
+    console.log(`[INFO] [CROP ${node.id}] Executing crop image node...`);
+    
+    // Get image input from connected image node or from node data
     const incomingEdges = edges.filter(edge => edge.target === node.id);
     
     let imageUrl = node.data.originalImage || node.data.image;
@@ -498,17 +495,29 @@ async function executeCropImageNode(
         throw new Error("No image input found for crop node");
     }
     
-    const cropData = node.data.cropArea || { x: 0, y: 0, width: 100, height: 100 };
+    console.log(`[INFO] [CROP ${node.id}] Image URL: ${imageUrl}`);
+    console.log(`[INFO] [CROP ${node.id}] Crop params:`, {
+        x: node.data.cropX,
+        y: node.data.cropY,
+        width: node.data.cropWidth,
+        height: node.data.cropHeight,
+    });
     
     const result = await cropImageTask.triggerAndWait({
         imageUrl,
-        cropX: cropData.x,
-        cropY: cropData.y,
-        cropWidth: cropData.width,
-        cropHeight: cropData.height,
+        cropX: node.data.cropX || 0,
+        cropY: node.data.cropY || 0,
+        cropWidth: node.data.cropWidth || 100,
+        cropHeight: node.data.cropHeight || 100,
     });
     
-    return result;
+    console.log(`[SUCCESS] [CROP ${node.id}] Crop completed:`, result.ok);
+    
+    if (result.ok) {
+        return result.output;
+    } else {
+        return { success: false, error: result.error };
+    }
 }
 
 // Execute Extract Frame Node
@@ -518,7 +527,9 @@ async function executeExtractFrameNode(
     allNodes: NodeData[],
     nodeOutputs: Map<string, any>
 ): Promise<any> {
-    // Get video input from connected video node
+    console.log(`[INFO] [EXTRACT FRAME ${node.id}] Executing extract frame node...`);
+    
+    // Get video input from connected video node or from node data
     const incomingEdges = edges.filter(edge => edge.target === node.id);
     
     let videoUrl = node.data.videoUrl;
@@ -537,19 +548,25 @@ async function executeExtractFrameNode(
         throw new Error("No video input found for extract frame node");
     }
     
-    const cropData = node.data.cropArea || { x: 0, y: 0, width: 100, height: 100 };
-    const framesPerSecond = node.data.framesPerSecond || 1;
+    console.log(`[INFO] [EXTRACT FRAME ${node.id}] Video URL: ${videoUrl}`);
+    console.log(`[INFO] [EXTRACT FRAME ${node.id}] Frame number: ${node.data.frameNumber}`);
     
     const result = await extractVideoFrames.triggerAndWait({
         videoUrl,
-        cropX: cropData.x,
-        cropY: cropData.y,
-        cropWidth: cropData.width,
-        cropHeight: cropData.height,
-        framesPerSecond,
+        cropX: 0,
+        cropY: 0,
+        cropWidth: 100,
+        cropHeight: 100,
+        framesPerSecond: node.data.frameNumber || 1,  // Use frameNumber as timestamp
     });
     
-    return result;
+    console.log(`[SUCCESS] [EXTRACT FRAME ${node.id}] Extraction completed:`, result.ok);
+    
+    if (result.ok) {
+        return result.output;
+    } else {
+        return { success: false, error: result.error };
+    }
 }
 
 // ==================== SINGLE NODE EXECUTOR ====================

@@ -188,31 +188,44 @@ export const cropImageTask = task({
         
         try {
             configureCloudinary();
-            // Extract public ID from Cloudinary URL or use the URL directly
+            
+            // Extract public ID from Cloudinary URL with full path including folders
             let publicId = payload.imageUrl;
             
-            // If it's a Cloudinary URL, extract the public ID
             if (payload.imageUrl.includes('cloudinary.com')) {
-                const urlParts = payload.imageUrl.split('/');
-                const uploadIndex = urlParts.findIndex(part => part === 'upload');
-                if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
-                    publicId = urlParts[uploadIndex + 2].split('.')[0];
+                const uploadIndex = payload.imageUrl.indexOf('/upload/');
+                if (uploadIndex !== -1) {
+                    // Get everything after /upload/
+                    const afterUpload = payload.imageUrl.substring(uploadIndex + 8);
+                    
+                    // Remove version if present (v1234567890/)
+                    const versionMatch = afterUpload.match(/^v\d+\//);
+                    const afterVersion = versionMatch ? afterUpload.substring(versionMatch[0].length) : afterUpload;
+                    
+                    // Remove file extension
+                    publicId = afterVersion.replace(/\.[^/.]+$/, '');
+                    
+                    console.log(`[INFO] Extracted public ID with full path: ${publicId}`);
                 }
             }
 
-            // Use Cloudinary to crop the image
+            // Use Cloudinary to crop the image with percentage-based coordinates
+            // Cloudinary percentage format: divide by 100 (e.g., 10% = 0.1)
             const croppedUrl = cloudinary.url(publicId, {
                 transformation: [
                     {
                         crop: 'crop',
-                        x: Math.round(payload.cropX),
-                        y: Math.round(payload.cropY),
-                        width: Math.round(payload.cropWidth),
-                        height: Math.round(payload.cropHeight),
+                        x: payload.cropX / 100,  // Convert percentage to decimal (10 -> 0.1)
+                        y: payload.cropY / 100,
+                        width: payload.cropWidth / 100,
+                        height: payload.cropHeight / 100,
                     }
                 ],
                 secure: true,
+                resource_type: 'image',
             });
+            
+            console.log(`[SUCCESS] Generated cropped URL: ${croppedUrl}`);
 
             return {
                 success: true,
@@ -240,97 +253,61 @@ export const extractVideoFrames = task({
         framesPerSecond: number;
     }) => {
         console.log(`Extracting frames from video: ${payload.videoUrl}`);
-        
         try {
             configureCloudinary();
-            // Extract public ID from Cloudinary URL
+            // Extract public ID from Cloudinary URL with full path including folders
             let publicId = payload.videoUrl;
-            
             if (payload.videoUrl.includes('cloudinary.com')) {
-                const urlParts = payload.videoUrl.split('/');
-                const uploadIndex = urlParts.findIndex(part => part === 'upload');
-                if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
-                    publicId = urlParts[uploadIndex + 2].split('.')[0];
+                const uploadIndex = payload.videoUrl.indexOf('/upload/');
+                if (uploadIndex !== -1) {
+                    // Get everything after /upload/
+                    const afterUpload = payload.videoUrl.substring(uploadIndex + 8);
+                    // Remove version if present (v1234567890/)
+                    const versionMatch = afterUpload.match(/^v\d+\//);
+                    const afterVersion = versionMatch ? afterUpload.substring(versionMatch[0].length) : afterUpload;
+                    // Remove file extension
+                    publicId = afterVersion.replace(/\.[^/.]+$/, '');
+                    console.log(`[INFO] Extracted video public ID with full path: ${publicId}`);
                 }
             }
 
-            // Get video info to determine duration
-            const videoInfo = await cloudinary.api.resource(publicId, {
-                resource_type: 'video',
-            });
+            // Use framesPerSecond as the timestamp (single frame extraction)
+            const timestamp = payload.framesPerSecond; // This is actually frameNumber from UI
+            console.log(`[INFO] Extracting single frame at timestamp: ${timestamp}s`);
 
-            const duration = videoInfo.duration || 10; // Default to 10 seconds if unknown
-            const totalFrames = Math.ceil(duration * payload.framesPerSecond);
-            const frameInterval = 1 / payload.framesPerSecond; // Seconds between frames
-
-            const frameUrls: string[] = [];
-
-            // Extract frames at specified intervals
-            for (let i = 0; i < totalFrames; i++) {
-                const timeOffset = i * frameInterval;
-                
-                // Generate frame URL with crop transformation
-                const frameUrl = cloudinary.url(publicId, {
-                    resource_type: 'video',
-                    transformation: [
-                        {
-                            crop: 'crop',
-                            x: Math.round(payload.cropX),
-                            y: Math.round(payload.cropY),
-                            width: Math.round(payload.cropWidth),
-                            height: Math.round(payload.cropHeight),
-                        },
-                        {
-                            format: 'jpg',
-                            page: Math.floor(timeOffset * 30), // Approximate frame number (30 fps)
-                        }
-                    ],
-                    secure: true,
-                });
-
-                frameUrls.push(frameUrl);
+            // --- NEW: Check video duration before extracting frame ---
+            const { getVideoDuration } = await import("./cloudinary-utils");
+            const duration = await getVideoDuration(publicId);
+            console.log(`[DEBUG] Video duration: ${duration}, requested timestamp: ${timestamp}`);
+            if (duration == null) {
+                console.warn('[WARN] Could not determine video duration, proceeding to extract frame.');
+            } else if (timestamp > duration + 0.5) {
+                return {
+                    success: false,
+                    error: `Requested frame (${timestamp}s) is beyond video duration (${duration}s).`,
+                    frames: [],
+                };
             }
+            // --- END duration check ---
 
-            // For more accurate frame extraction, use Cloudinary's video transformation
-            // This generates individual frame images
-            const extractedFrames = await Promise.all(
-                frameUrls.map(async (url, index) => {
-                    try {
-                        // Use Cloudinary's video frame extraction
-                        const frameUrl = cloudinary.url(publicId, {
-                            resource_type: 'video',
-                            transformation: [
-                                {
-                                    crop: 'crop',
-                                    x: Math.round(payload.cropX),
-                                    y: Math.round(payload.cropY),
-                                    width: Math.round(payload.cropWidth),
-                                    height: Math.round(payload.cropHeight),
-                                },
-                                {
-                                    format: 'jpg',
-                                    start_offset: `${index * frameInterval}`,
-                                }
-                            ],
-                            secure: true,
-                        });
-                        return frameUrl;
-                    } catch (err) {
-                        console.error(`Failed to extract frame ${index}:`, err);
-                        return url; // Fallback to original URL
-                    }
-                })
-            );
-
+            // Generate frame URL using start_offset for precise timestamp
+            const frameUrl = cloudinary.url(publicId, {
+                resource_type: 'video',
+                transformation: [
+                  { so: timestamp, fetch_format: 'jpg', quality: 'auto' }
+                ],
+                secure: true,
+            });
+            console.log(`[SUCCESS] Generated frame URL: ${frameUrl}`);
             return {
                 success: true,
-                frames: extractedFrames.filter(Boolean),
+                frames: [frameUrl], // Return single frame in array for consistency
             };
         } catch (error: any) {
-            console.error('Extract frames error:', error);
+            console.error('Extract frame error:', error);
             return {
                 success: false,
-                error: error.message || 'Failed to extract frames',
+                error: error.message || 'Failed to extract frame',
                 frames: [],
             };
         }

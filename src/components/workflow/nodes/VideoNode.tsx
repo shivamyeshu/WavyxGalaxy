@@ -73,7 +73,11 @@ export default function VideoNode({ id, data, isConnectable, selected }: NodePro
       }
 
       try {
-        updateNodeData(id, { status: "loading" });
+        // Clear any previous errors
+        updateNodeData(id, {
+          status: "loading",
+          errorMessage: undefined,
+        });
 
         const formData = new FormData();
         formData.append('file', file);

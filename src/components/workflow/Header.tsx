@@ -341,7 +341,8 @@ export default function Header() {
 							
 							console.log(`📄 [POLL] Extracted text (${outputText?.length || 0} chars):`, outputText?.substring(0, 100));
 							
-							updateNodeData(execution.nodeId, {
+							// Prepare update data
+							const updateData: any = {
 								status: "success",
 								outputs: outputText ? [{
 									id: crypto.randomUUID(),
@@ -349,8 +350,27 @@ export default function Header() {
 									content: outputText,
 									timestamp: Date.now(),
 								}] : undefined,
-								croppedImage: execution.outputData.croppedImageUrl,
-							});
+							};
+							
+							// Add cropped image if present
+							if (execution.outputData.croppedImageUrl) {
+								console.log(`🖼️ [POLL] Cropped image URL: ${execution.outputData.croppedImageUrl}`);
+								updateData.croppedImage = execution.outputData.croppedImageUrl;
+								updateData.status = "success";
+							}
+							
+							// Add extracted frames if present
+							if (execution.outputData.frames && Array.isArray(execution.outputData.frames)) {
+								console.log(`🎬 [POLL] Extracted ${execution.outputData.frames.length} frames`);
+								// ExtractFrameNode expects 'extractedFrame' (single frame URL)
+								// For now, use the first frame if available
+								if (execution.outputData.frames.length > 0) {
+									updateData.extractedFrame = execution.outputData.frames[0];
+									updateData.status = "success";
+								}
+							}
+							
+							updateNodeData(execution.nodeId, updateData);
 						} else if (execution.status === "FAILED") {
 							console.log(`❌ [POLL] Updating node ${execution.nodeId} with error`);
 							updateNodeData(execution.nodeId, {
