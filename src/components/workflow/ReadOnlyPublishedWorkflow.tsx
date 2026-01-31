@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { MarkerType } from "@xyflow/react";
 import {
     Background,
     BackgroundVariant,
@@ -204,7 +203,7 @@ export default function ReadOnlyPublishedWorkflow({ name, nodes, edges, shareId,
                     <Lock size={16} className="text-blue-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 text-sm text-white/80">
                         <p className="font-semibold text-blue-300 mb-1">How to use this workflow:</p>
-                        <p className="text-white/70">Click "<strong>Use this workflow</strong>" above to create an editable copy in your workspace. You'll be able to modify nodes, add new ones, and run it with your own inputs.</p>
+                        <p className="text-white/70">Click &quot;<strong>Use this workflow</strong>&quot; above to create an editable copy in your workspace. You&apos;ll be able to modify nodes, add new ones, and run it with your own inputs.</p>
                     </div>
                 </div>
             </div>

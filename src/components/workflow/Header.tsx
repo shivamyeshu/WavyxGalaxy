@@ -1,7 +1,8 @@
 "use client";
 
 import React, {useState, useCallback, useEffect, useRef} from "react";
-import {Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock, Megaphone} from "lucide-react";
+import Link from "next/link";
+import {Home, Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock, Megaphone} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {publishWorkflowAction, saveWorkflowAction, checkWorkflowPublishedAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
@@ -216,7 +217,7 @@ export default function Header() {
 		URL.revokeObjectURL(url);
 	}, [nodes, edges, workflowName]);
 
-	// --- HANDLE RUN WORKFLOW (Execute all nodes) ---
+	// --- HANDLE RUN WORKFLOW (Trigger Server-Side Orchestrator) ---
 	const handleRunWorkflow = useCallback(async () => {
 		if (nodes.length === 0) {
 			toast.error("Canvas is empty!");
@@ -229,187 +230,180 @@ export default function Header() {
 			return;
 		}
 
-		// Check if workflow has any LLM nodes
-		const llmNodes = nodes.filter(node => node.type === "llmNode");
-		if (llmNodes.length === 0) {
+		// Check if workflow has executable nodes
+		const executableNodes = nodes.filter(
+			node => node.type === "llmNode" || 
+					node.type === "cropImageNode" || 
+					node.type === "extractFrameNode"
+		);
+		
+		if (executableNodes.length === 0) {
 			toast.error("No executable nodes found in workflow!");
 			return;
 		}
 
-		setIsRunning(true);
-		toast.loading(`Running ${llmNodes.length} node(s)...`, { id: "workflow-run" });
+		// Save workflow first (if not already saved)
+		if (!workflowId) {
+			toast.loading("Saving workflow before execution...", { id: "workflow-save-pre-run" });
+			try {
+				const saveResult = await saveWorkflowAction({
+					id: workflowId,
+					name: workflowName,
+					nodes,
+					edges,
+				});
 
-		let successCount = 0;
-		let errorCount = 0;
+				if (saveResult.success && saveResult.id) {
+					setWorkflowId(saveResult.id);
+					toast.success("Workflow saved!", { id: "workflow-save-pre-run" });
+				} else {
+					toast.error("Failed to save workflow. Cannot execute.", { id: "workflow-save-pre-run" });
+					return;
+				}
+			} catch (error) {
+				toast.error("Failed to save workflow. Cannot execute.", { id: "workflow-save-pre-run" });
+				return;
+			}
+		}
+
+		const currentWorkflowId = workflowId;
+		if (!currentWorkflowId) {
+			toast.error("Workflow must be saved before execution");
+			return;
+		}
+
+		setIsRunning(true);
+		toast.loading(`Triggering server-side execution for ${executableNodes.length} node(s)...`, { id: "workflow-run" });
 
 		try {
-			// Execute all LLM nodes in sequence
-			for (const node of llmNodes) {
-				const nodeData = node.data as LLMNodeData;
-				
-				// Update node status to loading
-				updateNodeData(node.id, {status: "loading", errorMessage: undefined});
+			// Trigger server-side orchestrator via API
+			const response = await fetch(`/api/workflows/${currentWorkflowId}/run`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
 
-				try {
-					// Collect inputs from connected nodes
-					const incomingEdges = edges.filter((edge) => edge.target === node.id);
-					
-					let systemPromptBase = "";
-					let userPromptBase = "";
-					const incomingContext = "";
-					const imageUrls: string[] = [];
+			const result = await response.json();
 
-					// Process connected nodes
-					for (const edge of incomingEdges) {
-						const sourceNode = nodes.find((n) => n.id === edge.source);
-						if (!sourceNode) continue;
-
-						// Handle Text Nodes
-						if (sourceNode.type === "textNode") {
-							const text = (sourceNode.data as TextNodeData).text;
-							if (!text) continue;
-
-							if (edge.targetHandle === "system-prompt") {
-								systemPromptBase += text + "\n";
-							} else if (edge.targetHandle === "prompt") {
-								userPromptBase += text + "\n";
-							}
-						}
-
-						// Handle LLM Nodes (chaining)
-						if (sourceNode.type === "llmNode") {
-							const llmData = sourceNode.data as LLMNodeData;
-							if (llmData.outputs && llmData.outputs.length > 0) {
-								const lastOutput = llmData.outputs[llmData.outputs.length - 1].content;
-								if (edge.targetHandle === "system-prompt") {
-									systemPromptBase += lastOutput + "\n";
-								} else if (edge.targetHandle === "prompt") {
-									userPromptBase = lastOutput;
-								}
-							}
-						}
-
-						// Handle Image Nodes
-						if (sourceNode.type === "imageNode" && edge.targetHandle?.startsWith("image")) {
-							const imageData = sourceNode.data as ImageNodeData;
-							const imageUrl = imageData.file?.url || imageData.image;
-							if (imageUrl && typeof imageUrl === "string") {
-								if (imageUrl.startsWith("data:")) {
-									imageUrls.push(imageUrl);
-								} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
-									const base64 = await urlToBase64(imageUrl);
-									imageUrls.push(base64);
-								}
-							}
-						}
-
-						// Handle Crop Image Nodes
-						if (sourceNode.type === "cropImageNode" && edge.targetHandle?.startsWith("image")) {
-						const cropImageData = sourceNode.data as {croppedImage?: string; originalImage?: string};
-							const imageUrl = cropImageData.croppedImage || cropImageData.originalImage;
-							if (imageUrl && typeof imageUrl === "string") {
-								if (imageUrl.startsWith("data:")) {
-									imageUrls.push(imageUrl);
-								} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
-									const base64 = await urlToBase64(imageUrl);
-									imageUrls.push(base64);
-								}
-							}
-						}
-					}
-
-					// Construct final prompts
-					let finalSystemPrompt = systemPromptBase;
-					if (incomingContext) {
-						finalSystemPrompt += incomingContext;
-					}
-
-					const finalUserPrompt = userPromptBase || "Process this request based on the system instructions and context.";
-
-					// Validation
-					if (!finalSystemPrompt.trim() && !finalUserPrompt.trim() && imageUrls.length === 0) {
-						throw new Error("Input required: Connect a prompt or image");
-					}
-
-					// Call API route
-					const response = await fetch("/api/llm/execute", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							model: nodeData.model,
-							prompt: finalUserPrompt,
-							systemPrompt: finalSystemPrompt || undefined,
-							imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-							temperature: nodeData.temperature || 0.7,
-							userId: userId,
-						}),
-					});
-
-					const result = await response.json();
-
-					if (!response.ok || !result.success) {
-						throw new Error(result.error || "Failed to generate content");
-					}
-
-					// Update node with success
-					updateNodeData(node.id, {
-						status: "success",
-						outputs: [
-							{
-								id: crypto.randomUUID(),
-								type: "text",
-								content: result.text || "No response.",
-								timestamp: Date.now(),
-							},
-						],
-					});
-
-					successCount++;
-
-					// Wait a bit before next node
-					await new Promise(resolve => setTimeout(resolve, 500));
-
-				} catch (error: unknown) {
-					console.error(`Node ${node.id} failed:`, error);
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
-					updateNodeData(node.id, {status: "error", errorMessage});
-					errorCount++;
-				}
+			if (!response.ok || !result.success) {
+				throw new Error(result.error || "Failed to start workflow execution");
 			}
 
-			// Show final status
-			if (errorCount === 0) {
-				toast.success(`All ${successCount} nodes executed successfully!`, { id: "workflow-run" });
-			} else {
-				toast.error(`${successCount} succeeded, ${errorCount} failed`, { id: "workflow-run" });
-			}
+			toast.success(`Workflow execution started! Run ID: ${result.runId}`, { id: "workflow-run" });
+
+			// Poll for execution status
+			pollExecutionStatus(currentWorkflowId, result.runId);
 
 		} catch (error) {
 			console.error("Workflow run error:", error);
-			toast.error("Failed to run workflow", { id: "workflow-run" });
-		} finally {
+			const errorMessage = error instanceof Error ? error.message : "Failed to run workflow";
+			toast.error(errorMessage, { id: "workflow-run" });
 			setIsRunning(false);
 		}
-	}, [nodes, edges, userId, updateNodeData]);
+	}, [nodes, edges, userId, workflowId, workflowName, setWorkflowId]);
 
-	// Helper function to convert URL to base64
-	async function urlToBase64(url: string): Promise<string> {
-		try {
-			const response = await fetch(url);
-			const blob = await response.blob();
-			return new Promise((resolve, reject) => {
-				const reader = new FileReader();
-				reader.onloadend = () => resolve(reader.result as string);
-				reader.onerror = reject;
-				reader.readAsDataURL(blob);
-			});
-		} catch (error) {
-			console.error("Failed to convert URL to base64:", error);
-			throw error;
-		}
-	}
+	// Poll execution status and update node states
+	const pollExecutionStatus = useCallback(async (wfId: string, runId: string) => {
+		console.log(`🔄 [POLL] Starting status polling for workflow ${wfId}, run ${runId}`);
+		const maxAttempts = 60; // Poll for up to 60 seconds
+		let attempts = 0;
+
+		const pollInterval = setInterval(async () => {
+			attempts++;
+			console.log(`📡 [POLL] Attempt ${attempts}/${maxAttempts}`);
+
+			try {
+				const response = await fetch(`/api/workflows/${wfId}/run`);
+				console.log(`📥 [POLL] Response status: ${response.status}`);
+				const result = await response.json();
+				console.log(`📊 [POLL] Result:`, { success: result.success, runStatus: result.run?.status, executions: result.run?.nodeExecutions?.length });
+
+				if (!result.success || !result.run) {
+					throw new Error("Failed to get execution status");
+				}
+
+				const run = result.run;
+
+				// Update node statuses based on executions
+				if (run.nodeExecutions && run.nodeExecutions.length > 0) {
+					console.log(`🔄 [POLL] Processing ${run.nodeExecutions.length} node executions`);
+					run.nodeExecutions.forEach((execution: any) => {
+						console.log(`📝 [POLL] Node ${execution.nodeId}: ${execution.status}`, execution);
+						
+						if (execution.status === "SUCCESS" && execution.outputData) {
+							console.log(`✅ [POLL] Updating node ${execution.nodeId} with success data:`, execution.outputData);
+							
+							// Extract text from various possible locations
+							const outputText = execution.outputData.text || 
+											 execution.outputData.result?.text ||
+											 (execution.outputData.success && execution.outputData.output);
+							
+							console.log(`📄 [POLL] Extracted text (${outputText?.length || 0} chars):`, outputText?.substring(0, 100));
+							
+							updateNodeData(execution.nodeId, {
+								status: "success",
+								outputs: outputText ? [{
+									id: crypto.randomUUID(),
+									type: "text",
+									content: outputText,
+									timestamp: Date.now(),
+								}] : undefined,
+								croppedImage: execution.outputData.croppedImageUrl,
+							});
+						} else if (execution.status === "FAILED") {
+							console.log(`❌ [POLL] Updating node ${execution.nodeId} with error`);
+							updateNodeData(execution.nodeId, {
+								status: "error",
+								errorMessage: execution.error || "Execution failed",
+							});
+						} else if (execution.status === "RUNNING") {
+							console.log(`⏳ [POLL] Node ${execution.nodeId} is running`);
+							updateNodeData(execution.nodeId, {
+								status: "loading",
+							});
+						}
+					});
+				} else {
+					console.log(`⚠️ [POLL] No node executions found in response!`);
+				}
+
+				// Check if workflow is complete
+				if (run.status === "COMPLETED") {
+					console.log(`✅ [POLL] Workflow COMPLETED`);
+					clearInterval(pollInterval);
+					setIsRunning(false);
+					
+					const successCount = run.nodeExecutions.filter((e: any) => e.status === "SUCCESS").length;
+					const failedCount = run.nodeExecutions.filter((e: any) => e.status === "FAILED").length;
+					console.log(`📊 [POLL] Results - Success: ${successCount}, Failed: ${failedCount}`);
+					
+					if (failedCount === 0) {
+						toast.success(`All ${successCount} nodes executed successfully!`, { id: "workflow-run" });
+					} else {
+						toast.error(`${successCount} succeeded, ${failedCount} failed`, { id: "workflow-run" });
+					}
+				} else if (run.status === "FAILED") {
+					clearInterval(pollInterval);
+					setIsRunning(false);
+					toast.error("Workflow execution failed", { id: "workflow-run" });
+				}
+
+				// Stop polling after max attempts
+				if (attempts >= maxAttempts) {
+					clearInterval(pollInterval);
+					setIsRunning(false);
+					toast.error("Execution timeout - check run history", { id: "workflow-run" });
+				}
+
+			} catch (error) {
+				console.error("Poll error:", error);
+				clearInterval(pollInterval);
+				setIsRunning(false);
+				toast.error("Failed to monitor execution", { id: "workflow-run" });
+			}
+		}, 1000); // Poll every second
+	}, [updateNodeData]);
 
 	return (
 		<>
@@ -454,6 +448,13 @@ export default function Header() {
 
 				{/* --- RIGHT SIDE (Buttons) --- */}
 				<div className="flex gap-2">
+					<Link
+						href="/workflows"
+						className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-white/10 text-white text-xs font-bold rounded-lg hover:bg-white/10 transition-all group"
+					>
+						<Home size={14} className="group-hover:text-blue-400 transition-colors" />
+						HOME
+					</Link>
 
 					<button
 						onClick={() => setIsApiKeyOpen(true)}
@@ -512,7 +513,7 @@ export default function Header() {
 			
 			{/* Publish Choice Modal - Update or Create New */}
 			{showPublishChoice && existingPublishUrl && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+				<div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm">
 					<div className="relative w-full max-w-lg mx-4 bg-[#1a1a1a] border-2 border-yellow-100/30 rounded-2xl shadow-2xl p-6">
 						<h3 className="text-xl font-bold text-white mb-2">Already Published</h3>
 						<p className="text-sm text-white/70 mb-6">This workflow is already published. What would you like to do?</p>

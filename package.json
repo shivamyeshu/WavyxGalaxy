@@ -1,6 +1,6 @@
 {
   "name": "weavy-clone",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -13,7 +13,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.7",
     "@google/generative-ai": "^0.24.1",
-    "@trigger.dev/sdk": "4.3.2",
+    "@trigger.dev/sdk": "^4.3.3",
     "@types/uuid": "^10.0.0",
     "@xyflow/react": "^12.10.0",
     "cloudinary": "^2.9.0",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@prisma/client": "^5.22.0",
     "@tailwindcss/postcss": "^4",
-    "@trigger.dev/build": "4.3.2",
+    "@trigger.dev/build": "^4.3.3",
     "@trigger.dev/cli": "^3.2.4",
     "@types/node": "^20.19.30",
     "@types/pg": "^8.16.0",

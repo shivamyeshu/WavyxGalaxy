@@ -24,6 +24,8 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
   const edges = useWorkflowStore((state) => state.edges);
   const nodes = useWorkflowStore((state) => state.nodes);
 
+  const isManagedByStore = nodes.some((n) => n.id === id);
+
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
@@ -140,6 +142,11 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
 
   // Detect incoming image from connected node
   useEffect(() => {
+    // In the read-only shared workflow viewer, nodes are passed via props and are not
+    // registered inside the zustand store. Avoid calling updateNodeData in that case
+    // to prevent an infinite update loop.
+    if (!isManagedByStore) return;
+
     const incomingEdge = edges.find((e) => e.target === id && e.targetHandle === "image-input");
 
     if (incomingEdge) {
@@ -166,7 +173,7 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
         status: "idle",
       });
     }
-  }, [edges, nodes, id, updateNodeData, originalImage]);
+  }, [edges, nodes, id, updateNodeData, originalImage, isManagedByStore]);
 
   const handleParameterChange = useCallback(
     (field: "cropX" | "cropY" | "cropWidth" | "cropHeight", value: number) => {

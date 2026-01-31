@@ -92,187 +92,113 @@ export default function LLMNode({id, data, isConnectable, selected}: NodeProps<L
 			return;
 		}
 
+		// Get workflowId from store
+		const workflowId = useWorkflowStore.getState().workflowId;
+		if (!workflowId) {
+			updateNodeData(id, {status: "error", errorMessage: "Please save workflow first"});
+			return;
+		}
+
 		updateNodeData(id, {status: "loading", errorMessage: undefined});
-		console.log("--- RUN STARTED ---");
+		console.log("🎯 [SINGLE NODE] Starting execution via Trigger.dev...");
 
 		try {
 			const allNodes = getNodes();
 			const allEdges = getEdges();
-			const incomingEdges = allEdges.filter((edge) => edge.target === id);
 
-			console.log(`Found ${incomingEdges.length} connections to this node`);
-
-			let systemPromptBase = ""; // From text nodes connected to system-prompt
-			let userPromptBase = ""; // From text nodes connected to prompt
-			let incomingContext = ""; // From upstream LLM nodes
-			const imageUrls: string[] = [];
-
-			// Collect inputs based on handle IDs
-			for (const edge of incomingEdges) {
-				const sourceNode = allNodes.find((n) => n.id === edge.source);
-				if (!sourceNode) continue;
-
-				console.log(`Connected node type: ${sourceNode.type}, target handle: ${edge.targetHandle}`);
-
-				// Handle Text Nodes (direct text input)
-				if (sourceNode.type === "textNode") {
-					const text = (sourceNode.data as TextNodeData).text;
-					if (edge.targetHandle === "system-prompt") {
-						systemPromptBase = text || "";
-					} else if (edge.targetHandle === "prompt") {
-						userPromptBase = text || "";
-					}
-				}
-
-				// Handle LLM Nodes (chaining) - Accumulate context from upstream outputs
-				if (sourceNode.type === "llmNode") {
-					const outputs = (sourceNode.data as LLMNodeData).outputs;
-					if (outputs && outputs.length > 0) {
-						const lastOutput = outputs[outputs.length - 1].content || "";
-						const nodeLabel = (sourceNode.data as LLMNodeData).label || "Previous Step";
-
-						if (edge.targetHandle === "system-prompt") {
-							// Add to context with label for clarity
-							incomingContext += `\n\n--- CONTEXT FROM: ${nodeLabel} ---\n${lastOutput}`;
-						} else if (edge.targetHandle === "prompt") {
-							// If connected to prompt handle, use as user prompt
-							userPromptBase = lastOutput;
-						}
-					}
-				}
-
-				// Handle Image Nodes (connected to any image handle)
-				if (sourceNode.type === "imageNode" && edge.targetHandle?.startsWith("image")) {
-					const imageData = sourceNode.data as ImageNodeData;
-
-					// Check both file.url (manual upload) and image (demo/preloaded)
-					const imageUrl = imageData.file?.url || imageData.image;
-
-					if (imageUrl && typeof imageUrl === "string") {
-						console.log("Found image:", imageData.file?.name || "image");
-
-						// Check if it's already base64 or needs conversion
-						if (imageUrl.startsWith("data:")) {
-							// Already base64
-							imageUrls.push(imageUrl);
-						} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
-							// Public URL - needs conversion
-							console.log("Converting URL to base64:", imageUrl);
-							try {
-								const base64 = await urlToBase64(imageUrl);
-								imageUrls.push(base64);
-							} catch (error) {
-								console.error("Failed to convert image:", error);
-								throw new Error(`Failed to load image: ${imageUrl}`);
-							}
-						} else {
-							imageUrls.push(imageUrl);
-						}
-					}
-				}
-
-				// Handle Crop Image Nodes (connected to any image handle)
-				if (sourceNode.type === "cropImageNode" && edge.targetHandle?.startsWith("image")) {
-					const cropImageData = sourceNode.data as any;
-
-					// Use cropped image if available, otherwise fall back to original
-					const imageUrl = cropImageData.croppedImage || cropImageData.originalImage;
-
-					if (imageUrl && typeof imageUrl === "string") {
-						console.log("Found cropped image");
-
-						// Check if it's already base64 or needs conversion
-						if (imageUrl.startsWith("data:")) {
-							// Already base64
-							imageUrls.push(imageUrl);
-						} else if (imageUrl.startsWith("/") || imageUrl.startsWith("http")) {
-							// Public URL - needs conversion
-							console.log("Converting cropped image URL to base64:", imageUrl);
-							try {
-								const base64 = await urlToBase64(imageUrl);
-								imageUrls.push(base64);
-							} catch (error) {
-								console.error("Failed to convert cropped image:", error);
-								throw new Error(`Failed to load cropped image: ${imageUrl}`);
-							}
-						} else {
-							imageUrls.push(imageUrl);
-						}
-					}
-				}
-			}
-
-			// Construct final prompts
-			// Combine system prompt base with incoming context from upstream nodes
-			let finalSystemPrompt = systemPromptBase;
-			if (incomingContext) {
-				finalSystemPrompt += incomingContext;
-			}
-
-			// Use user prompt or default trigger message
-			const finalUserPrompt = userPromptBase || "Process this request based on the system instructions and context.";
-
-			console.log("Final Inputs:", {
-				systemPrompt: finalSystemPrompt.substring(0, 100) + "...",
-				userPrompt: finalUserPrompt.substring(0, 100) + "...",
-				imageCount: imageUrls.length,
-			});
-
-			// Validation - require at least some input
-			if (!finalSystemPrompt.trim() && !finalUserPrompt.trim() && imageUrls.length === 0) {
-				throw new Error("Input required: Connect a prompt or image");
-			}
-
-			// Call API route with validated data
-			console.log("Using model:", data.model);
-
-			const response = await fetch("/api/llm/execute", {
+			// Trigger server-side execution via Trigger.dev
+			const response = await fetch(`/api/workflows/nodes/${id}/run`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					model: data.model,
-					prompt: finalUserPrompt,
-					systemPrompt: finalSystemPrompt || undefined,
-					imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-					temperature: data.temperature || 0.7,
-					userId: userId,
+					workflowId,
+					nodeData: {
+						type: "llmNode",
+						...data,
+					},
+					edges: allEdges,
+					allNodes: allNodes.map(n => ({
+						id: n.id,
+						type: n.type,
+						data: n.data,
+						position: n.position,
+					})),
 				}),
 			});
 
 			const result = await response.json();
 
 			if (!response.ok || !result.success) {
-				// Provide user-friendly error messages based on status code
-				let errorMessage = result.error || "Failed to generate content";
-
-				if (response.status === 503) {
-					errorMessage = "Model is busy. Retrying automatically...";
-				} else if (response.status === 429) {
-					errorMessage = "Rate limit reached. Please wait a moment.";
-				}
-
-				throw new Error(errorMessage);
+				throw new Error(result.error || "Failed to trigger execution");
 			}
 
-			updateNodeData(id, {
-				status: "success",
-				outputs: [
-					{
-						id: crypto.randomUUID(),
-						type: "text",
-						content: result.text || "No response.",
-						timestamp: Date.now(),
-					},
-				],
-			});
+			const { runId } = result;
+			console.log(`✅ [SINGLE NODE] Triggered! RunId: ${runId}`);
+
+			// Poll for results
+			let attempts = 0;
+			const maxAttempts = 30;
+
+			const pollInterval = setInterval(async () => {
+				attempts++;
+				
+				try {
+					const statusResponse = await fetch(`/api/workflows/nodes/${id}/run?runId=${runId}`);
+					const statusResult = await statusResponse.json();
+
+					if (!statusResult.success) {
+						throw new Error("Failed to get status");
+					}
+
+					const run = statusResult.run;
+
+					if (run.status === "COMPLETED" && run.nodeExecutions.length > 0) {
+						clearInterval(pollInterval);
+						const execution = run.nodeExecutions[0];
+
+						if (execution.status === "SUCCESS" && execution.outputData) {
+							const outputText = execution.outputData.text || 
+											 execution.outputData.result?.text ||
+											 execution.outputData.output;
+
+							updateNodeData(id, {
+								status: "success",
+								outputs: outputText ? [{
+									id: crypto.randomUUID(),
+									type: "text",
+									content: outputText,
+									timestamp: Date.now(),
+								}] : undefined,
+							});
+							
+							console.log(`✅ [SINGLE NODE] Execution completed successfully`);
+						} else {
+							throw new Error(execution.error || "Execution failed");
+						}
+					} else if (run.status === "FAILED") {
+						clearInterval(pollInterval);
+						throw new Error("Execution failed");
+					}
+
+					if (attempts >= maxAttempts) {
+						clearInterval(pollInterval);
+						throw new Error("Execution timeout");
+					}
+
+				} catch (error) {
+					clearInterval(pollInterval);
+					throw error;
+				}
+			}, 1000);
+
 		} catch (error: unknown) {
-			console.error("Run Failed:", error);
+			console.error("❌ [SINGLE NODE] Run Failed:", error);
 			const errorMessage = error instanceof Error ? error.message : "Unknown error";
 			updateNodeData(id, {status: "error", errorMessage});
 		}
-	}, [id, updateNodeData, getNodes, getEdges, data.model, data.temperature]);
+	}, [id, updateNodeData, getNodes, getEdges, data, userId]);
 
 	return (
 		<div
