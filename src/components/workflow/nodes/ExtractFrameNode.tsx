@@ -97,7 +97,10 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
     }
 
     console.log("[ExtractFrame] Starting extraction with params:", { videoUrl, frameNumber });
-    updateNodeData(id, { status: "loading" });
+    updateNodeData(id, { 
+      status: "loading",
+      errorMessage: undefined,  // Clear any previous errors
+    });
     const loadingToast = toast.loading("Extracting frame via Trigger.dev...");
 
     try {
@@ -181,21 +184,6 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
         }
       }, 1000);
 
-      if (!result.frameUrl) {
-        throw new Error('No frame URL returned from server');
-      }
-
-      console.log("[ExtractFrame] Frame extracted via Trigger.dev:", {
-        frameUrl: result.frameUrl.substring(0, 100),
-      });
-
-      updateNodeData(id, {
-        extractedFrame: result.frameUrl,
-        status: "success",
-      });
-      
-      toast.dismiss(loadingToast);
-      toast.success(`Frame #${frameNumber} extracted via Trigger.dev!`);
     } catch (error: unknown) {
       console.error("❌ [ExtractFrame] Extraction error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to extract frame";
