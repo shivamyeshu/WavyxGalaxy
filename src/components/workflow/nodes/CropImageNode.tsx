@@ -62,7 +62,7 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
     });
   }, []);
 
-  // Perform crop (only on button click)
+  // Perform crop via Trigger.dev (using single-node-executor)
   const performCrop = useCallback(async () => {
     if (!originalImage) return;
 
@@ -70,75 +70,94 @@ export default function CropImageNode({ id, data, isConnectable, selected }: Nod
     updateNodeData(id, { status: "loading" });
 
     try {
-      const img = await loadImage(originalImage);
-      const canvas = canvasRef.current;
-      if (!canvas) throw new Error("Canvas ref missing");
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas context not available");
-
-      const cropWidthPx = (img.width * cropWidth) / 100;
-      const cropHeightPx = (img.height * cropHeight) / 100;
-      const cropXPx = (img.width * cropX) / 100;
-      const cropYPx = (img.height * cropY) / 100;
-
-      canvas.width = cropWidthPx;
-      canvas.height = cropHeightPx;
-
-      ctx.drawImage(img, cropXPx, cropYPx, cropWidthPx, cropHeightPx, 0, 0, cropWidthPx, cropHeightPx);
-
-      const croppedBase64 = canvas.toDataURL("image/png");
-
-      // Upload cropped image to Cloudinary CDN
-      try {
-        // Convert base64 to blob
-        const response = await fetch(croppedBase64);
-        const blob = await response.blob();
-        const file = new File([blob], `cropped-${Date.now()}.png`, { type: 'image/png' });
-
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const uploadResponse = await fetch('/api/image/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (uploadResponse.ok) {
-          const uploadResult = await uploadResponse.json();
-          const cdnUrl = uploadResult.image.cdnUrl;
-          
-          // console.log("[CropImageNode] Cropped image uploaded to CDN:", cdnUrl);
-
-          updateNodeData(id, {
-            croppedImage: cdnUrl, // Store CDN URL instead of base64
-            status: "success",
-          });
-        } else {
-          // Fallback to base64 if CDN upload fails
-          updateNodeData(id, {
-            croppedImage: croppedBase64,
-            status: "success",
-          });
-        }
-      } catch (uploadError) {
-        console.error("CDN upload error, using base64 fallback:", uploadError);
-        // Fallback to base64 if upload fails
-        updateNodeData(id, {
-          croppedImage: croppedBase64,
-          status: "success",
-        });
+      const workflowId = useWorkflowStore.getState().workflowId;
+      if (!workflowId) {
+        throw new Error("Please save workflow first");
       }
+
+      console.log("🖼️  [CropImage] Starting crop via Trigger.dev");
+
+      // Trigger via single-node-executor (same as LLM node)
+      const response = await fetch(`/api/workflows/nodes/${id}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workflowId,
+          nodeData: {
+            type: "cropImageNode",
+            originalImage,
+            cropX,
+            cropY,
+            cropWidth,
+            cropHeight,
+          },
+          edges: useWorkflowStore.getState().edges,
+          allNodes: useWorkflowStore.getState().nodes.map(n => ({
+            id: n.id,
+            type: n.type,
+            data: n.data,
+            position: n.position,
+          })),
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to trigger execution");
+      }
+
+      const { runId } = result;
+      console.log(`✅ [CropImage] Triggered! RunId: ${runId}`);
+
+      // Poll for results
+      let attempts = 0;
+      const maxAttempts = 30;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const statusResponse = await fetch(`/api/workflows/nodes/${id}/run?runId=${runId}`);
+          const statusResult = await statusResponse.json();
+
+          if (!statusResult.success) throw new Error("Failed to get status");
+
+          const run = statusResult.run;
+          if (run.status === "COMPLETED" && run.nodeExecutions.length > 0) {
+            clearInterval(pollInterval);
+            const execution = run.nodeExecutions[0];
+
+            if (execution.status === "SUCCESS" && execution.outputData?.croppedImageUrl) {
+              updateNodeData(id, {
+                croppedImage: execution.outputData.croppedImageUrl,
+                status: "success",
+              });
+              setIsLoading(false);
+              console.log(`✅ [CropImage] Completed successfully`);
+            } else {
+              throw new Error(execution.error || "Crop failed");
+            }
+          } else if (run.status === "FAILED") {
+            clearInterval(pollInterval);
+            throw new Error("Execution failed");
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            throw new Error("Execution timeout");
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          throw error;
+        }
+      }, 1000);
     } catch (error) {
       console.error("Crop error:", error);
       updateNodeData(id, {
         status: "error",
-        errorMessage: "Failed to crop image",
+        errorMessage: error instanceof Error ? error.message : "Failed to crop image via Trigger.dev",
       });
-    } finally {
       setIsLoading(false);
     }
-  }, [originalImage, cropX, cropY, cropWidth, cropHeight, id, updateNodeData, loadImage]);
+  }, [originalImage, cropX, cropY, cropWidth, cropHeight, id, updateNodeData]);
 
   // Detect incoming image from connected node
   useEffect(() => {

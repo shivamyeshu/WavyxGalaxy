@@ -188,31 +188,44 @@ export const cropImageTask = task({
         
         try {
             configureCloudinary();
-            // Extract public ID from Cloudinary URL or use the URL directly
+            
+            // Extract public ID from Cloudinary URL with full path including folders
             let publicId = payload.imageUrl;
             
-            // If it's a Cloudinary URL, extract the public ID
             if (payload.imageUrl.includes('cloudinary.com')) {
-                const urlParts = payload.imageUrl.split('/');
-                const uploadIndex = urlParts.findIndex(part => part === 'upload');
-                if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
-                    publicId = urlParts[uploadIndex + 2].split('.')[0];
+                const uploadIndex = payload.imageUrl.indexOf('/upload/');
+                if (uploadIndex !== -1) {
+                    // Get everything after /upload/
+                    const afterUpload = payload.imageUrl.substring(uploadIndex + 8);
+                    
+                    // Remove version if present (v1234567890/)
+                    const versionMatch = afterUpload.match(/^v\d+\//);
+                    const afterVersion = versionMatch ? afterUpload.substring(versionMatch[0].length) : afterUpload;
+                    
+                    // Remove file extension
+                    publicId = afterVersion.replace(/\.[^/.]+$/, '');
+                    
+                    console.log(`[INFO] Extracted public ID with full path: ${publicId}`);
                 }
             }
 
-            // Use Cloudinary to crop the image
+            // Use Cloudinary to crop the image with percentage-based coordinates
+            // Cloudinary percentage format: divide by 100 (e.g., 10% = 0.1)
             const croppedUrl = cloudinary.url(publicId, {
                 transformation: [
                     {
                         crop: 'crop',
-                        x: Math.round(payload.cropX),
-                        y: Math.round(payload.cropY),
-                        width: Math.round(payload.cropWidth),
-                        height: Math.round(payload.cropHeight),
+                        x: payload.cropX / 100,  // Convert percentage to decimal (10 -> 0.1)
+                        y: payload.cropY / 100,
+                        width: payload.cropWidth / 100,
+                        height: payload.cropHeight / 100,
                     }
                 ],
                 secure: true,
+                resource_type: 'image',
             });
+            
+            console.log(`[SUCCESS] Generated cropped URL: ${croppedUrl}`);
 
             return {
                 success: true,
@@ -243,14 +256,19 @@ export const extractVideoFrames = task({
         
         try {
             configureCloudinary();
-            // Extract public ID from Cloudinary URL
+            // Extract public ID from Cloudinary URL (including folder path)
             let publicId = payload.videoUrl;
             
             if (payload.videoUrl.includes('cloudinary.com')) {
                 const urlParts = payload.videoUrl.split('/');
                 const uploadIndex = urlParts.findIndex(part => part === 'upload');
                 if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
-                    publicId = urlParts[uploadIndex + 2].split('.')[0];
+                    // Get everything after /upload/v{version}/ including folders
+                    const pathParts = urlParts.slice(uploadIndex + 2);
+                    // Remove file extension from last part
+                    const lastPart = pathParts[pathParts.length - 1];
+                    pathParts[pathParts.length - 1] = lastPart.split('.')[0];
+                    publicId = pathParts.join('/');
                 }
             }
 

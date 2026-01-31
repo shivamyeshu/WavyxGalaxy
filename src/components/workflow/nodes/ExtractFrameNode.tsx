@@ -89,7 +89,7 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
     }
   }, [edges, nodes, id, updateNodeData, videoUrl, isManagedByStore]);
 
-  // Extract single frame via API
+  // Extract single frame via Trigger.dev (using single-node-executor)
   const extractFrame = useCallback(async () => {
     if (!videoUrl || frameNumber < 0) {
       toast.error("Video URL or frame number is invalid");
@@ -98,48 +98,95 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
 
     console.log("[ExtractFrame] Starting extraction with params:", { videoUrl, frameNumber });
     updateNodeData(id, { status: "loading" });
-    const loadingToast = toast.loading("Extracting frame...");
+    const loadingToast = toast.loading("Extracting frame via Trigger.dev...");
 
     try {
-      console.log("🎬 [ExtractFrame] Sending request with frameNumber:", frameNumber);
-      
-      const response = await fetch('/api/video/extract-frame', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const workflowId = useWorkflowStore.getState().workflowId;
+      if (!workflowId) {
+        toast.error("Please save workflow first");
+        return;
+      }
+
+      console.log("🎬 [ExtractFrame] Triggering via Trigger.dev");
+
+      // Trigger via single-node-executor (same as LLM node)
+      const response = await fetch(`/api/workflows/nodes/${id}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          videoUrl,
-          frameNumber,
+          workflowId,
+          nodeData: {
+            type: "extractFrameNode",
+            videoUrl,
+            frameNumber,
+          },
+          edges: useWorkflowStore.getState().edges,
+          allNodes: useWorkflowStore.getState().nodes.map(n => ({
+            id: n.id,
+            type: n.type,
+            data: n.data,
+            position: n.position,
+          })),
         }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error("❌ [ExtractFrame] API error:", error);
-        throw new Error(error.error || `API error: ${response.status}`);
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Failed to trigger execution");
       }
 
-      const result = await response.json();
-      console.log("✅ [ExtractFrame] Frame extraction result:", result);
+      const { runId } = result;
+      console.log(`✅ [ExtractFrame] Triggered! RunId: ${runId}`);
+
+      // Poll for results
+      let attempts = 0;
+      const maxAttempts = 30;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const statusResponse = await fetch(`/api/workflows/nodes/${id}/run?runId=${runId}`);
+          const statusResult = await statusResponse.json();
+
+          if (!statusResult.success) throw new Error("Failed to get status");
+
+          const run = statusResult.run;
+          if (run.status === "COMPLETED" && run.nodeExecutions.length > 0) {
+            clearInterval(pollInterval);
+            const execution = run.nodeExecutions[0];
+
+            if (execution.status === "SUCCESS" && execution.outputData?.frames) {
+              const frameUrl = execution.outputData.frames[0];
+              updateNodeData(id, {
+                extractedFrame: frameUrl,
+                status: "success",
+              });
+              toast.dismiss(loadingToast);
+              toast.success(`Frame #${frameNumber} extracted via Trigger.dev!`);
+              console.log(`✅ [ExtractFrame] Completed successfully`);
+            } else {
+              throw new Error(execution.error || "Extraction failed");
+            }
+          } else if (run.status === "FAILED") {
+            clearInterval(pollInterval);
+            throw new Error("Execution failed");
+          }
+
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            throw new Error("Execution timeout");
+          }
+        } catch (error) {
+          clearInterval(pollInterval);
+          throw error;
+        }
+      }, 1000);
 
       if (!result.frameUrl) {
         throw new Error('No frame URL returned from server');
       }
 
-      // Validate that we got a real frame, not just a thumbnail
-      // Check if URL contains frame extraction parameters
-      if (!result.frameUrl.includes('f_jpg') && !result.frameUrl.includes('so_')) {
-        console.warn("⚠️ [ExtractFrame] Warning: URL might be a thumbnail, not extracted frame:", result.frameUrl);
-      }
-
-      console.log("[ExtractFrame] Frame URL params:", {
-        method: result.method,
-        timestamp: result.timestamp,
-        frameNumber: result.frameNumber,
-        duration: result.duration,
-        estimatedFPS: result.estimatedFPS,
-        hasFormat: result.frameUrl.includes('f_jpg'),
-        hasOffset: result.frameUrl.includes('so_'),
-        urlPreview: result.frameUrl.substring(0, 100),
+      console.log("[ExtractFrame] Frame extracted via Trigger.dev:", {
+        frameUrl: result.frameUrl.substring(0, 100),
       });
 
       updateNodeData(id, {
@@ -148,7 +195,7 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
       });
       
       toast.dismiss(loadingToast);
-      toast.success(`Frame #${frameNumber} extracted successfully!`);
+      toast.success(`Frame #${frameNumber} extracted via Trigger.dev!`);
     } catch (error: unknown) {
       console.error("❌ [ExtractFrame] Extraction error:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to extract frame";
