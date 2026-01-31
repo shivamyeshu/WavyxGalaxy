@@ -102,8 +102,8 @@ export async function POST(
             // This allows testing without Trigger.dev running
             import("@/trigger/orchestrator").then(async (module) => {
                 try {
-                    await module.orchestrator.run({ runId: run.id });
-                    console.log(`[SUCCESS] [API POST] Direct execution completed`);
+                    await module.orchestrator.trigger({ runId: run.id });
+                    console.log(`[SUCCESS] [API POST] Direct execution triggered`);
                 } catch (execError) {
                     console.error(`[ERROR] [API POST] Direct execution failed:`, execError);
                 }

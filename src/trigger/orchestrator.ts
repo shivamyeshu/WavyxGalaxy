@@ -37,7 +37,7 @@ export const orchestrator = task({
                 } 
             },
         });
-        console.log("[INFO] [ORCHESTRATOR] Found run:", { id: run?.id, workflowId: run?.workflow?.id, userId: run?.workflow?.user?.userId });
+        console.log("[INFO] [ORCHESTRATOR] Found run:", { id: run?.id, workflowId: run?.workflow?.id, userId: run?.workflow?.user?.id });
 
         if (!run) throw new Error(`Run ${payload.runId} not found`);
 
@@ -49,7 +49,7 @@ export const orchestrator = task({
         });
         console.log("[SUCCESS] [ORCHESTRATOR] Run status updated to RUNNING");
 
-        const graph = run.workflow.data as WorkflowGraph;
+        const graph = run.workflow.data as unknown as WorkflowGraph;
         const nodes = graph.nodes;
         const edges = graph.edges;
 
@@ -66,7 +66,7 @@ export const orchestrator = task({
             
             console.log("[INFO] [ORCHESTRATOR] Starting parallel node execution...");
             // Execute nodes with parallel execution where possible
-            const userId = run.workflow.user?.userId;
+            const userId = run.workflow.user?.id;
             console.log(`[INFO] [ORCHESTRATOR] User ID for API key lookup: ${userId || '(none)'}`);
             await executeNodesInParallel(nodes, edges, dependencyMap, run.id, userId);
             console.log("[SUCCESS] [ORCHESTRATOR] All nodes executed successfully");
@@ -461,7 +461,7 @@ async function executeLLMNode(
     // Extract the actual output from Trigger.dev response
     const result = triggerResult.ok && triggerResult.output 
         ? triggerResult.output 
-        : triggerResult;
+        : (triggerResult as unknown) as { success: boolean; text: string };
     
     console.log(`\n[INFO] [LLM ${node.id}] ========== OUTPUT ==========`);
     console.log(`   Success: ${result.success}`);

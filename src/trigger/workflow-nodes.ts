@@ -133,7 +133,7 @@ export const aiGenerator = task({
                     })
                 );
                 
-                const validImageParts = imageParts.filter(Boolean);
+                const validImageParts = imageParts.filter(Boolean) as Array<{ inlineData: { data: string; mimeType: string } }>;
                 console.log(`[SUCCESS] [TASK aiGenerator] Converted ${validImageParts.length} images to Gemini format`);
                 
                 if (validImageParts.length > 0) {

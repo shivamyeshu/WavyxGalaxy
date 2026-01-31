@@ -22,6 +22,8 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
   const edges = useWorkflowStore((state) => state.edges);
   const nodes = useWorkflowStore((state) => state.nodes);
 
+  const isManagedByStore = nodes.some((n) => n.id === id);
+
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +51,11 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
 
   // Detect incoming video from connected node
   useEffect(() => {
+    // In the read-only shared workflow viewer, nodes are passed via props and are not
+    // registered inside the zustand store. Avoid calling updateNodeData in that case
+    // to prevent an infinite update loop.
+    if (!isManagedByStore) return;
+
     const incomingEdge = edges.find((e) => e.target === id);
 
     if (incomingEdge) {
@@ -80,7 +87,7 @@ export default function ExtractFrameNode({ id, data, isConnectable, selected }: 
         });
       }
     }
-  }, [edges, nodes, id, updateNodeData, videoUrl]);
+  }, [edges, nodes, id, updateNodeData, videoUrl, isManagedByStore]);
 
   // Extract single frame via API
   const extractFrame = useCallback(async () => {

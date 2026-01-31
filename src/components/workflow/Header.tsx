@@ -1,7 +1,8 @@
 "use client";
 
 import React, {useState, useCallback, useEffect, useRef} from "react";
-import {Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock, Megaphone} from "lucide-react";
+import Link from "next/link";
+import {Home, Save, Loader2, Share2, FolderOpen, Layers, Play, Key, Clock, Megaphone} from "lucide-react";
 import {useWorkflowStore} from "@/store/workflowStore";
 import {publishWorkflowAction, saveWorkflowAction, checkWorkflowPublishedAction} from "@/app/actions/workflowActions";
 import LoadWorkflowModal from "./LoadWorkflowModal";
@@ -447,6 +448,13 @@ export default function Header() {
 
 				{/* --- RIGHT SIDE (Buttons) --- */}
 				<div className="flex gap-2">
+					<Link
+						href="/workflows"
+						className="flex items-center gap-2 px-3 py-2 bg-[#222] border border-white/10 text-white text-xs font-bold rounded-lg hover:bg-white/10 transition-all group"
+					>
+						<Home size={14} className="group-hover:text-blue-400 transition-colors" />
+						HOME
+					</Link>
 
 					<button
 						onClick={() => setIsApiKeyOpen(true)}
