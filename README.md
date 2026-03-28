@@ -10,6 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Trigger.dev](https://img.shields.io/badge/Trigger.dev-4.3.3-purple?style=flat)](https://trigger.dev/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![gitcgr](https://gitcgr.com/badge/shivamyeshu/wavyxgalaxy.svg)](https://gitcgr.com/shivamyeshu/wavyxgalaxy)
 
 [Features](#features) • [Tech Stack](#tech-stack) • [Getting Started](#getting-started) • [Architecture](#architecture) • [Demo](#demo-walkthrough)
 
